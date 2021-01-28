@@ -81,19 +81,3 @@
   <img src="https://raw.githubusercontent.com/devicons/devicon/9c6bfdb9783cdfe1018666ed76adcfd3eab6fad6/icons/python/python-original.svg" alt="python" width="40" height="40"/>
   <img src="https://www.vectorlogo.zone/logos/vagrantup/vagrantup-icon.svg" alt="vagrant" width="40" height="40"/>
 </p>
-
-<!--END_SECTION:waka-->
-
-<!-- #### Analysis 
-
-
-**Timeline**
-
-![Chart not found](https://raw.githubusercontent.com/SuguruOoki/SuguruOoki/master/charts/bar_graph.png) 
-
-
-
-</details>
-
-
-![wakatime](https://github.com/SuguruOoki/SuguruOoki/workflows/Waka%20Readme/badge.svg)-->
