@@ -87,3 +87,7 @@
   <img src="https://raw.githubusercontent.com/devicons/devicon/9c6bfdb9783cdfe1018666ed76adcfd3eab6fad6/icons/vim/vim-original.svg" height="40" width="40">
   <img src="https://raw.githubusercontent.com/devicons/devicon/9c6bfdb9783cdfe1018666ed76adcfd3eab6fad6/icons/slack/slack-original-wordmark.svg" height="40" width="40">
 </p>
+
+#### LinkedIn
+
+<div class="LI-profile-badge"  data-version="v1" data-size="medium" data-locale="ja_JP" data-type="horizontal" data-theme="dark" data-vanity="suguru-ohki"><a class="LI-simple-link" href='https://jp.linkedin.com/in/suguru-ohki?trk=profile-badge'>Suguru Ohki</a></div>
