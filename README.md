@@ -40,9 +40,6 @@
   <a href="https://stackoverflow.com/users/suguru-oki" target="blank">
     <img src="https://cdn.jsdelivr.net/npm/simple-icons@3.0.1/icons/stackoverflow.svg" alt="SuguruOoki" height="30" width="30" />
   </a>
-  <a href="https://www.quora.com/profile/Yutakatay" target="blank">
-    <img src="https://www.flaticon.com/svg/static/icons/svg/732/732105.svg" alt="SuguruOoki" height="30" width="30" />
-  </a>
 </p>
 
 <p align="left"> 
@@ -51,22 +48,26 @@
 </p>
 
 ![trophy](https://github-profile-trophy.vercel.app/?username=SuguruOoki&theme=gruvbox)
+
 [![](https://raw.githubusercontent.com/SuguruOoki/SuguruOoki/master/profile-summary-card-output/dracula/0-profile-details.svg)](https://github.com/vn7n24fzkq/github-profile-summary-cards)
+
 [![](https://raw.githubusercontent.com/SuguruOoki/SuguruOoki/master/profile-summary-card-output/dracula/1-repos-per-language.svg)](https://github.com/vn7n24fzkq/github-profile-summary-cards)
+
 [![](https://raw.githubusercontent.com/SuguruOoki/SuguruOoki/master/profile-summary-card-output/dracula/2-most-commit-language.svg)](https://github.com/vn7n24fzkq/github-profile-summary-cards)
+
 [![GitHub Streak](http://github-readme-streak-stats.herokuapp.com?user=SuguruOoki&theme=dark&hide_border=true&currStreakNum=DD2727)](https://git.io/streak-stats)
 
 #### Development Environment
 
 - Often Using Languages: PHP
 - Editor: VsCode → but I like Vim!!!
-- Shell: zsh
-- Terminal: iterm
+- Shell: Zsh
+- Terminal: iTerm
 - OS: OSX
-- PC: Macbook Pro
-- Keyboard: HHKB, Ergodox EZ
+- PC: Macbook Pro(M1)
+- Keyboard: Ergodox EZ, HHKB
 - Mouse: MagicTrackPad
-- Smartphone: iPhone8
+- SmartPhone: iPhone8
 
 #### Languages and Tools
 
