@@ -25,11 +25,8 @@
 </p>
 
 <p align="left"> 
-  <a href="https://SuguruOoki.github.io/">
-    <img alt="homepage" width="30px" src="https://image.flaticon.com/icons/svg/565/565527.svg" />
-  </a>
   <a href="https://twitter.com/SuguruOoki">
-    <img alt="twitter" width="30px" src="https://image.flaticon.com/icons/svg/123/123728.svg" />
+    <img alt="twitter" width="30px" src="https://cdn.cms-twdigitalassets.com/content/dam/developer-twitter/images/Twitter_logo_blue_32.png" />
   </a>
   <a href="https://qiita.com/SuguruOoki">
     <img alt="qiita" width="30px" src="https://simpleicons.org/icons/qiita.svg" />
@@ -45,6 +42,12 @@
 <p align="left"> 
   <img alt="Top Langs" height="150px" src="https://github-readme-stats.vercel.app/api/top-langs/?username=SuguruOoki&layout=compact&count_private=true&show_icons=true&show_icons=true&theme=onedark" />
   <img alt="github stats" height="150px" src="https://github-readme-stats.vercel.app/api?username=SuguruOoki&count_private=true&show_icons=true&show_icons=true&theme=onedark" />
+</p>
+
+<p align="left"> 
+  <a href="https://SuguruOoki.github.io/">
+    webpage
+  </a>
 </p>
 
 ![trophy](https://github-profile-trophy.vercel.app/?username=SuguruOoki&theme=gruvbox)
