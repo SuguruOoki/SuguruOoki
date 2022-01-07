@@ -1,40 +1,40 @@
 ### 👋 Hi! I'm SuguruOoki
 
 <p align="left"> 
-  <a href="https://github.com/SuguruOoki/SuguruOoki/">
+  <a href="https://github.com/SuguruOoki/SuguruOoki/"　target="_blank" rel="noopener noreferrer">
     <img src="https://komarev.com/ghpvc/?username=SuguruOoki" alt="SuguruOoki" />
   </a>
-  <a href="http://twitter.com/gurusu_program">
+  <a href="http://twitter.com/gurusu_program"　target="_blank" rel="noopener noreferrer">
     <img height="20" src="https://img.shields.io/twitter/follow/gurusu_program?label=Twitter&logo=twitter&style=flat" />
   </a>
-  <a href="https://github.com/SuguruOoki">
+  <a href="https://github.com/SuguruOoki"　target="_blank" rel="noopener noreferrer">
     <img height="20" src="https://img.shields.io/github/followers/SuguruOoki?label=follow&logo=github&style=flat" />
   </a>
-  <a href="https://www.reddit.com/user/SuguruOoki">
+  <a href="https://www.reddit.com/user/SuguruOoki"　target="_blank" rel="noopener noreferrer">
     <img height="20" src="https://img.shields.io/reddit/user-karma/combined/SuguruOoki?label=Reddit&logo=reddit&style=flat" />
   </a>
-  <a href="https://stackoverflow.com/users/8851426/suguru-oki">
+  <a href="https://stackoverflow.com/users/8851426/suguru-oki"　target="_blank" rel="noopener noreferrer">
     <img height="20" src="https://img.shields.io/stackexchange/stackoverflow/r/8851426?label=StackOverflow&logo=stack-overflow&style=flat" />
   </a>
-  <a href="http://qiita.com/SuguruOoki">
+  <a href="http://qiita.com/SuguruOoki"　target="_blank" rel="noopener noreferrer">
     <img height="20" src="https://qiita-badge.apiapi.app/s/SuguruOoki/posts.svg" />
   </a>
-  <a href="http://qiita.com/SuguruOoki">
+  <a href="http://qiita.com/SuguruOoki"　target="_blank" rel="noopener noreferrer">
     <img height="20" src="https://qiita-badge.apiapi.app/s/SuguruOoki/contributions.svg" />
   </a>
 </p>
 
 <p align="left"> 
-  <a href="https://twitter.com/SuguruOoki">
+  <a href="https://twitter.com/SuguruOoki"　target="_blank" rel="noopener noreferrer">
     <img alt="twitter" width="30px" src="https://cdn.cms-twdigitalassets.com/content/dam/developer-twitter/images/Twitter_logo_blue_32.png" />
   </a>
-  <a href="https://qiita.com/SuguruOoki">
+  <a href="https://qiita.com/SuguruOoki"　target="_blank" rel="noopener noreferrer">
     <img alt="qiita" width="30px" src="https://simpleicons.org/icons/qiita.svg" />
   </a>
-  <a href="https://dev.to/SuguruOoki" target="blank">
+  <a href="https://dev.to/SuguruOoki"　target="_blank" rel="noopener noreferrer">
     <img src="https://cdn.jsdelivr.net/npm/simple-icons@3.0.1/icons/dev-dot-to.svg" alt="SuguruOoki" height="30" width="30" />
   </a>
-  <a href="https://stackoverflow.com/users/suguru-oki" target="blank">
+  <a href="https://stackoverflow.com/users/suguru-oki"　target="_blank" rel="noopener noreferrer">
     <img src="https://cdn.jsdelivr.net/npm/simple-icons@3.0.1/icons/stackoverflow.svg" alt="SuguruOoki" height="30" width="30" />
   </a>
 </p>
@@ -45,7 +45,7 @@
 </p>
 
 <p align="left"> 
-  <a href="https://SuguruOoki.github.io/">
+  <a href="https://SuguruOoki.github.io/"　target="_blank" rel="noopener noreferrer">
     webpage
   </a>
 </p>
@@ -94,4 +94,6 @@
 
 #### LinkedIn
 
-<div class="LI-profile-badge"  data-version="v1" data-size="medium" data-locale="ja_JP" data-type="horizontal" data-theme="dark" data-vanity="suguru-ohki"><a class="LI-simple-link" href='https://jp.linkedin.com/in/suguru-ohki?trk=profile-badge'>Suguru Ohki</a></div>
+<div class="LI-profile-badge"  data-version="v1" data-size="medium" data-locale="ja_JP" data-type="horizontal" data-theme="dark" data-vanity="suguru-ohki">
+  <a class="LI-simple-link" href='https://jp.linkedin.com/in/suguru-ohki?trk=profile-badge'　target="_blank" rel="noopener noreferrer">Suguru Ohki</a>
+</div>
