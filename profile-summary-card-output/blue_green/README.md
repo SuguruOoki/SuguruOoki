@@ -52,13 +52,3 @@
 ```
 
     
-
----
-
-![](./4-productive-time.svg)
-
-```
-![](https://raw.githubusercontent.com/SuguruOoki/SuguruOoki/main/profile-summary-card-output/blue_green/4-productive-time.svg)
-```
-
-    
