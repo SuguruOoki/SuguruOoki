@@ -1,8 +1,10 @@
-import { Client } from "@notionhq/client";
 import type { BusinessIdea } from "./types.js";
 
+const NOTION_API_VERSION = "2025-09-03";
+const NOTION_BASE_URL = "https://api.notion.com/v1";
+
 export class NotionDatabase {
-  private client: Client;
+  private apiKey: string;
   private databaseId: string;
 
   constructor() {
@@ -16,11 +18,27 @@ export class NotionDatabase {
       throw new Error("NOTION_DATABASE_ID not set");
     }
 
-    this.client = new Client({
-      auth: apiKey,
-      notionVersion: "2025-09-03",
-    });
+    this.apiKey = apiKey;
     this.databaseId = databaseId;
+  }
+
+  private async request(endpoint: string, body: unknown): Promise<unknown> {
+    const response = await fetch(`${NOTION_BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+        "Notion-Version": NOTION_API_VERSION,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Notion API error: ${response.status} - ${errorBody}`);
+    }
+
+    return response.json();
   }
 
   async saveIdeas(ideas: BusinessIdea[]): Promise<string[]> {
@@ -29,7 +47,7 @@ export class NotionDatabase {
     for (const idea of ideas) {
       try {
         const page = await this.createPage(idea);
-        createdIds.push(page.id);
+        createdIds.push((page as { id: string }).id);
         console.log(`[notion] Created: ${idea.title}`);
       } catch (error) {
         console.error("[notion] Error creating page:", error);
@@ -39,8 +57,8 @@ export class NotionDatabase {
     return createdIds;
   }
 
-  private async createPage(idea: BusinessIdea) {
-    const properties: Record<string, any> = {
+  private async createPage(idea: BusinessIdea): Promise<unknown> {
+    const properties: Record<string, unknown> = {
       Title: {
         title: [
           {
@@ -94,7 +112,7 @@ export class NotionDatabase {
     };
 
     // 理由はページ本文に追加
-    const children: any[] = [];
+    const children: unknown[] = [];
     if (idea.potentialReason) {
       children.push({
         object: "block",
@@ -112,7 +130,7 @@ export class NotionDatabase {
       });
     }
 
-    return this.client.pages.create({
+    return this.request("/pages", {
       parent: { database_id: this.databaseId },
       properties,
       children: children.length > 0 ? children : undefined,
@@ -121,15 +139,14 @@ export class NotionDatabase {
 
   async checkDuplicate(url: string): Promise<boolean> {
     try {
-      const response = await this.client.databases.query({
-        database_id: this.databaseId,
+      const response = (await this.request(`/databases/${this.databaseId}/query`, {
         filter: {
           property: "Original URL",
           url: {
             equals: url,
           },
         },
-      });
+      })) as { results: unknown[] };
       return response.results.length > 0;
     } catch {
       return false;
@@ -143,20 +160,19 @@ export class NotionDatabase {
     const urls = new Set<string>();
 
     try {
-      const response = await this.client.databases.query({
-        database_id: this.databaseId,
+      const response = (await this.request(`/databases/${this.databaseId}/query`, {
         filter: {
           property: "Collected At",
           date: {
             after: cutoff.toISOString(),
           },
         },
-      });
+      })) as { results: Array<{ properties?: Record<string, unknown> }> };
 
       for (const page of response.results) {
-        if ("properties" in page) {
-          const urlProp = page.properties["Original URL"];
-          if (urlProp && "url" in urlProp && typeof urlProp.url === "string") {
+        if (page.properties) {
+          const urlProp = page.properties["Original URL"] as { url?: string } | undefined;
+          if (urlProp && typeof urlProp.url === "string") {
             urls.add(urlProp.url);
           }
         }
