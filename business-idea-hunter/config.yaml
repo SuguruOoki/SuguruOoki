@@ -33,6 +33,23 @@ rss:
       - https://hnrss.org/ask
     keywords: []
 
+  # English tech/startup RSS feeds
+  indiehackers:
+    enabled: true
+    feeds:
+      - https://www.indiehackers.com/feed.xml
+    keywords:
+      - problem
+      - solution
+      - launched
+      - building
+
+  producthunt:
+    enabled: true
+    feeds:
+      - https://www.producthunt.com/feed
+    keywords: []
+
 reddit:
   enabled: true
   feeds:
@@ -56,30 +73,55 @@ reddit:
 x:
   enabled: true
   searchQueries:
+    # Japanese queries
     - "困っている min_faves:10 lang:ja"
     - "不便すぎる min_faves:10 lang:ja"
     - "なんでないの min_faves:5 lang:ja"
     - "欲しいサービス min_faves:5 lang:ja"
     - "自動化したい lang:ja"
     - "SaaS 欲しい lang:ja"
+    # English queries
+    - "I wish there was min_faves:10 lang:en"
+    - "frustrated with min_faves:10 lang:en"
+    - "why is there no min_faves:5 lang:en"
+    - "need a tool for min_faves:5 lang:en"
+    - "looking for a service min_faves:5 lang:en"
+    - "anyone know a SaaS min_faves:5 lang:en"
+    - "building in public min_faves:10 lang:en"
+    - "indie hacker min_faves:10 lang:en"
   maxScroll: 3
 
 instagram:
   enabled: true
   hashtags:
+    # Japanese hashtags
     - 起業
     - スタートアップ
     - 副業
     - ビジネスアイデア
+    # English hashtags
+    - startup
+    - indiehacker
+    - buildinpublic
+    - sideproject
+    - entrepreneurship
+    - saas
   maxPosts: 10
 
 tiktok:
   enabled: true
   searchQueries:
+    # Japanese queries
     - ビジネス
     - 起業
     - 副業
     - 困ってる
+    # English queries
+    - startup idea
+    - side hustle
+    - business problem
+    - building a startup
+    - indie hacker
   maxVideos: 10
 
 analysis:
