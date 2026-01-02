@@ -30,11 +30,60 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: Run collector
+        id: collector
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
-        run: npm start
+        run: |
+          # 出力をキャプチャしてファイルに保存
+          npm start 2>&1 | tee collector-output.log
+
+          # サマリー情報を抽出
+          TOTAL_ITEMS=$(grep -oP 'Total: \K\d+' collector-output.log || echo "0")
+          IDEAS_COUNT=$(grep -oP '💡 \K\d+' collector-output.log || echo "0")
+          HIGH_COUNT=$(grep -oP 'High: \K\d+' collector-output.log || echo "0")
+          MEDIUM_COUNT=$(grep -oP 'Medium: \K\d+' collector-output.log || echo "0")
+          LOW_COUNT=$(grep -oP 'Low: \K\d+' collector-output.log || echo "0")
+
+          # GitHub Outputsに設定
+          echo "total_items=$TOTAL_ITEMS" >> $GITHUB_OUTPUT
+          echo "ideas_count=$IDEAS_COUNT" >> $GITHUB_OUTPUT
+          echo "high_count=$HIGH_COUNT" >> $GITHUB_OUTPUT
+          echo "medium_count=$MEDIUM_COUNT" >> $GITHUB_OUTPUT
+          echo "low_count=$LOW_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Notify Slack on Success
+        if: success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          TOTAL_ITEMS: ${{ steps.collector.outputs.total_items }}
+          IDEAS_COUNT: ${{ steps.collector.outputs.ideas_count }}
+          HIGH_COUNT: ${{ steps.collector.outputs.high_count }}
+          MEDIUM_COUNT: ${{ steps.collector.outputs.medium_count }}
+          LOW_COUNT: ${{ steps.collector.outputs.low_count }}
+        run: |
+          # メッセージ作成
+          if [ "$IDEAS_COUNT" = "0" ]; then
+            MESSAGE="📊 *Business Idea Hunter 完了*\n\n収集アイテム: ${TOTAL_ITEMS}件\n新規アイデア: なし\n\n_${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}_"
+          else
+            MESSAGE="🎯 *Business Idea Hunter 完了*\n\n*収集結果*\n• 収集アイテム: ${TOTAL_ITEMS}件\n• 抽出アイデア: ${IDEAS_COUNT}件\n\n*ポテンシャル別*\n• 🔴 High: ${HIGH_COUNT}件\n• 🟡 Medium: ${MEDIUM_COUNT}件\n• 🟢 Low: ${LOW_COUNT}件\n\n_詳細はNotionで確認してください_\n${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          fi
+
+          curl -X POST "$SLACK_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"$MESSAGE\"}"
+
+      - name: Notify Slack on Failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          MESSAGE="❌ *Business Idea Hunter 失敗*\n\n実行に失敗しました。ログを確認してください。\n${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          curl -X POST "$SLACK_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"$MESSAGE\"}"
 
       - name: Summary
         if: always()
