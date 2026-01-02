@@ -16,7 +16,10 @@ export class NotionDatabase {
       throw new Error("NOTION_DATABASE_ID not set");
     }
 
-    this.client = new Client({ auth: apiKey });
+    this.client = new Client({
+      auth: apiKey,
+      notionVersion: "2025-09-03",
+    });
     this.databaseId = databaseId;
   }
 

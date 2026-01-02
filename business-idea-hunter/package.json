@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "openai": "^4.77.0",
-    "@notionhq/client": "^2.2.15",
+    "@notionhq/client": "^2.3.0",
     "cheerio": "^1.0.0",
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",

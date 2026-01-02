@@ -56,7 +56,7 @@ rss:
 
   # English tech/startup RSS feeds
   indiehackers:
-    enabled: true
+    enabled: false
     feeds:
       - https://www.indiehackers.com/feed.xml
     keywords:
@@ -92,7 +92,7 @@ reddit:
     - help me
 
 x:
-  enabled: true
+  enabled: false  # GitHub Actionsではスクレイピング不可
   searchQueries:
     # Japanese queries
     - "困っている min_faves:10 lang:ja"
