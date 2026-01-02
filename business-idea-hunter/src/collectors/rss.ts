@@ -6,7 +6,7 @@ export class RSSCollector extends BaseCollector {
   private parser: Parser;
   private sourceConfig: RSSSourceConfig;
 
-  constructor(config: Config, sourceName: "note" | "zenn" | "hackernews") {
+  constructor(config: Config, sourceName: "note" | "zenn" | "hackernews" | "indiehackers" | "producthunt") {
     super(config, sourceName);
     this.parser = new Parser();
     this.sourceConfig = config.rss[sourceName];

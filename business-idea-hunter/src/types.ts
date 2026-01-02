@@ -37,6 +37,8 @@ export interface Config {
     note: RSSSourceConfig;
     zenn: RSSSourceConfig;
     hackernews: RSSSourceConfig;
+    indiehackers: RSSSourceConfig;
+    producthunt: RSSSourceConfig;
   };
   reddit: RSSSourceConfig;
   x: {

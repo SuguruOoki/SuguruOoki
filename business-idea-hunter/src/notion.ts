@@ -153,7 +153,7 @@ export class NotionDatabase {
       for (const page of response.results) {
         if ("properties" in page) {
           const urlProp = page.properties["Original URL"];
-          if (urlProp && "url" in urlProp && urlProp.url) {
+          if (urlProp && "url" in urlProp && typeof urlProp.url === "string") {
             urls.add(urlProp.url);
           }
         }

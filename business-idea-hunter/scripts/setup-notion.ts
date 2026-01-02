@@ -32,6 +32,8 @@ async function createDatabase(
             { name: "x", color: "default" },
             { name: "instagram", color: "pink" },
             { name: "tiktok", color: "purple" },
+            { name: "producthunt", color: "brown" },
+            { name: "indiehackers", color: "yellow" },
           ],
         },
       },

@@ -53,6 +53,12 @@ async function collectAll(
   if (!sources || sources.includes("hackernews")) {
     collectors.push(["hackernews", new HackerNewsCollector(config)]);
   }
+  if (!sources || sources.includes("indiehackers")) {
+    collectors.push(["indiehackers", new RSSCollector(config, "indiehackers")]);
+  }
+  if (!sources || sources.includes("producthunt")) {
+    collectors.push(["producthunt", new RSSCollector(config, "producthunt")]);
+  }
 
   // API系
   if (!sources || sources.includes("reddit")) {

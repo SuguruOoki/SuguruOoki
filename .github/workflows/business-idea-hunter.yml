@@ -57,17 +57,21 @@ jobs:
         if: success()
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
           TOTAL_ITEMS: ${{ steps.collector.outputs.total_items }}
           IDEAS_COUNT: ${{ steps.collector.outputs.ideas_count }}
           HIGH_COUNT: ${{ steps.collector.outputs.high_count }}
           MEDIUM_COUNT: ${{ steps.collector.outputs.medium_count }}
           LOW_COUNT: ${{ steps.collector.outputs.low_count }}
         run: |
+          # NotionデータベースURLを生成（ハイフンを除去）
+          NOTION_DB_URL="https://www.notion.so/${NOTION_DATABASE_ID//-/}"
+
           # メッセージ作成
           if [ "$IDEAS_COUNT" = "0" ]; then
             MESSAGE="📊 *Business Idea Hunter 完了*\n\n収集アイテム: ${TOTAL_ITEMS}件\n新規アイデア: なし\n\n_${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}_"
           else
-            MESSAGE="🎯 *Business Idea Hunter 完了*\n\n*収集結果*\n• 収集アイテム: ${TOTAL_ITEMS}件\n• 抽出アイデア: ${IDEAS_COUNT}件\n\n*ポテンシャル別*\n• 🔴 High: ${HIGH_COUNT}件\n• 🟡 Medium: ${MEDIUM_COUNT}件\n• 🟢 Low: ${LOW_COUNT}件\n\n_詳細はNotionで確認してください_\n${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            MESSAGE="🎯 *Business Idea Hunter 完了*\n\n*収集結果*\n• 収集アイテム: ${TOTAL_ITEMS}件\n• 抽出アイデア: ${IDEAS_COUNT}件\n\n*ポテンシャル別*\n• 🔴 High: ${HIGH_COUNT}件\n• 🟡 Medium: ${MEDIUM_COUNT}件\n• 🟢 Low: ${LOW_COUNT}件\n\n📝 *Notionで確認*\n${NOTION_DB_URL}\n\n_Workflow: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}_"
           fi
 
           curl -X POST "$SLACK_WEBHOOK_URL" \
