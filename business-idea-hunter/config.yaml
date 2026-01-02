@@ -7,14 +7,35 @@ collection:
 rss:
   note:
     enabled: true
+    # note RSS format: https://note.com/{username}/rss
+    # マガジン: https://note.com/{username}/m/{magazine_id}/rss
     feeds:
-      - https://note.com/api/v2/trend_notes.rss
+      # ビジネス・スタートアップ系クリエイター
+      - https://note.com/shu_yamaguchi/rss      # 山口周（ビジネス思考）
+      - https://note.com/kensuu/rss             # けんすう（起業・プロダクト）
+      - https://note.com/evange/rss             # 田端信太郎
+      - https://note.com/sotarok/rss            # そーたろ（起業家）
+      - https://note.com/tck/rss                # 高梨大輔（スタートアップ）
+      - https://note.com/koukichi_t/rss         # こうきち（テック・SNS）
+      # 個人開発・エンジニア系
+      - https://note.com/dana_zosu/rss          # ダナ（個人開発で副収入）
+      - https://note.com/kantagon/rss           # Kengo KOSAKAI（個人開発月20万）
+      - https://note.com/ufas/rss               # ユーファス（SaaS開発）
+      # 新規事業・経営者系
+      - https://note.com/kazuhisakitamura/rss   # 北村和久（事業創造デザイナー）
+      - https://note.com/topbranding/rss        # いっぺい（経営者のnote編集者）
+      - https://note.com/taka_startup/rss       # taka_startup（起業家向け）
+      - https://note.com/kotakurihara/rss       # 栗原康太（才流・BtoBマーケ）
     keywords:
       - 困っている
       - 不便
       - 欲しい
       - 課題
       - 解決
+      - 作った
+      - 開発
+      - 個人開発
+      - SaaS
 
   zenn:
     enabled: true
