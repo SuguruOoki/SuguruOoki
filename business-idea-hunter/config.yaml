@@ -1,0 +1,96 @@
+# Business Idea Hunter Configuration
+
+collection:
+  maxItemsPerSource: 20
+  dedupDays: 7
+
+rss:
+  note:
+    enabled: true
+    feeds:
+      - https://note.com/api/v2/trend_notes.rss
+    keywords:
+      - 困っている
+      - 不便
+      - 欲しい
+      - 課題
+      - 解決
+
+  zenn:
+    enabled: true
+    feeds:
+      - https://zenn.dev/feed
+    keywords:
+      - 困った
+      - 解決
+      - 作った
+      - 自動化
+
+  hackernews:
+    enabled: true
+    feeds:
+      - https://hnrss.org/show
+      - https://hnrss.org/ask
+    keywords: []
+
+reddit:
+  enabled: true
+  feeds:
+    - https://www.reddit.com/r/Entrepreneur/.rss
+    - https://www.reddit.com/r/SideProject/.rss
+    - https://www.reddit.com/r/startups/.rss
+    - https://www.reddit.com/r/indiehackers/.rss
+    - https://www.reddit.com/r/Startup_Ideas/.rss
+    - https://www.reddit.com/r/smallbusiness/.rss
+    - https://www.reddit.com/r/japanlife/.rss
+  keywords:
+    - looking for
+    - wish there was
+    - anyone know
+    - frustrated
+    - problem
+    - solution
+    - I need
+    - help me
+
+x:
+  enabled: true
+  searchQueries:
+    - "困っている min_faves:10 lang:ja"
+    - "不便すぎる min_faves:10 lang:ja"
+    - "なんでないの min_faves:5 lang:ja"
+    - "欲しいサービス min_faves:5 lang:ja"
+    - "自動化したい lang:ja"
+    - "SaaS 欲しい lang:ja"
+  maxScroll: 3
+
+instagram:
+  enabled: true
+  hashtags:
+    - 起業
+    - スタートアップ
+    - 副業
+    - ビジネスアイデア
+  maxPosts: 10
+
+tiktok:
+  enabled: true
+  searchQueries:
+    - ビジネス
+    - 起業
+    - 副業
+    - 困ってる
+  maxVideos: 10
+
+analysis:
+  model: gpt-4o-mini
+  minPotentialScore: 5
+  japanFocus: true
+
+filters:
+  excludeKeywords:
+    - PR
+    - 広告
+    - プロモーション
+    - affiliate
+  minEngagement: 5

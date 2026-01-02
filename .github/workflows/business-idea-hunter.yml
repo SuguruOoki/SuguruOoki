@@ -1,0 +1,42 @@
+name: Collect Business Ideas
+
+on:
+  schedule:
+    # 毎日朝9時（JST）に実行 = UTC 0:00
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 手動実行も可能
+
+defaults:
+  run:
+    working-directory: business-idea-hunter
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run collector
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        run: npm start
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "Collection completed at $(date)"
