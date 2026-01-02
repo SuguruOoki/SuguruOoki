@@ -1,0 +1,114 @@
+# Next Engine 配送設定
+# ================================
+# 楽天市場・Amazon連携用
+
+shipping:
+  # 配送業者設定
+  carriers:
+    - carrier_id: "yamato"
+      name: "ヤマト運輸"
+      enabled: true
+      api_integration: true
+      tracking_url_template: "https://jizen.kuronekoyamato.co.jp/jizen/servlet/crjz.b.NQ0010?id={tracking_number}"
+
+    - carrier_id: "sagawa"
+      name: "佐川急便"
+      enabled: true
+      api_integration: true
+      tracking_url_template: "https://k2k.sagawa-exp.co.jp/p/web/okurijosearch.do?okurijoNo={tracking_number}"
+
+    - carrier_id: "japan_post"
+      name: "日本郵便"
+      enabled: true
+      api_integration: false
+      tracking_url_template: "https://trackings.post.japanpost.jp/services/srv/search/?requestNo1={tracking_number}"
+
+  # デフォルト配送業者
+  default_carrier: "yamato"
+
+  # 配送方法マッピング
+  delivery_methods:
+    - method_id: "standard"
+      name: "通常配送"
+      carrier: "yamato"
+      service_type: "takkyubin"
+      estimated_days: 2-3
+
+    - method_id: "express"
+      name: "お急ぎ便"
+      carrier: "yamato"
+      service_type: "time_service"
+      estimated_days: 1
+
+    - method_id: "mail"
+      name: "メール便"
+      carrier: "japan_post"
+      service_type: "yu_packet"
+      estimated_days: 3-5
+
+  # モール別配送設定
+  mall_settings:
+    rakuten:
+      # 楽天の配送方法とのマッピング
+      method_mapping:
+        "通常配送": "standard"
+        "お急ぎ便": "express"
+        "メール便": "mail"
+      # あす楽対応
+      asuraku_enabled: false
+      asuraku_cutoff_time: "12:00"
+
+    amazon:
+      # Amazonの配送方法とのマッピング
+      method_mapping:
+        "Standard": "standard"
+        "Expedited": "express"
+      # お届け日指定
+      delivery_date_enabled: true
+
+  # 自動化設定
+  automation:
+    # 送り状自動発行
+    auto_issue_slip: true
+    # 出荷通知自動送信
+    auto_ship_notification: true
+    # 追跡番号自動登録
+    auto_register_tracking: true
+    # ステータス自動更新
+    auto_status_update: true
+
+  # 送り状発行設定
+  slip_settings:
+    # 発行タイミング
+    issue_timing: "on_order_confirm"  # on_order_confirm, on_picking_complete, manual
+    # 印刷設定
+    print_format: "A4"
+    copies: 1
+
+  # 出荷完了処理
+  completion:
+    # 出荷完了時のアクション
+    on_complete:
+      - update_order_status
+      - send_tracking_email
+      - sync_to_malls
+    # メール通知テンプレート
+    email_template: "shipping_complete"
+
+# 配送料金設定
+shipping_fees:
+  calculation_method: "weight_based"  # weight_based, size_based, fixed
+
+  # 重量別料金（例）
+  weight_tiers:
+    - max_weight_kg: 2
+      fee: 600
+    - max_weight_kg: 5
+      fee: 800
+    - max_weight_kg: 10
+      fee: 1000
+
+  # 送料無料条件
+  free_shipping:
+    enabled: true
+    threshold: 5000  # 5000円以上で送料無料

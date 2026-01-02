@@ -1,0 +1,149 @@
+# Next Engine 商品マスタ設定
+# ================================
+# 楽天市場・Amazon連携用
+
+products:
+  # データソース設定
+  source:
+    type: csv  # csv, api, database
+    path: ./data/products.csv
+    encoding: utf-8
+
+  # CSVカラムマッピング
+  mapping:
+    product_code: "商品コード"
+    product_name: "商品名"
+    price: "販売価格"
+    stock: "在庫数"
+    jan_code: "JANコード"
+    category: "カテゴリ"
+    description: "商品説明"
+
+  # 処理オプション
+  options:
+    update_mode: upsert  # insert, update, upsert
+    batch_size: 100
+    dry_run: false
+    skip_errors: false
+    notify_on_complete: true
+
+# 既存商品考慮設定（NEW）
+existing_products:
+  # 既存商品の取得・比較を有効化
+  enabled: true
+
+  # 既存商品の取得方法
+  fetch:
+    # API経由で取得
+    method: api  # api, cache, both
+    # キャッシュファイルパス
+    cache_file: ./cache/existing-products.json
+    # キャッシュ有効期限（時間）
+    cache_ttl_hours: 24
+    # 取得時のページサイズ
+    page_size: 100
+
+  # 商品識別キー（優先順位順）
+  identification_keys:
+    - product_code      # 商品コード（最優先）
+    - jan_code          # JANコード
+    - internal_sku      # 社内SKU
+
+  # 差分検出設定
+  diff_detection:
+    # 差分検出対象フィールド
+    target_fields:
+      - product_name
+      - price
+      - description
+      - category
+      - jan_code
+    # 在庫は別途 /next-engine-inventory で管理するためデフォルト除外
+    exclude_fields:
+      - stock
+      - stock_quantity
+    # 空白・null の違いを無視
+    ignore_whitespace: true
+    ignore_null_vs_empty: true
+
+  # 同期動作設定
+  sync_behavior:
+    # NEW（新規商品）の処理
+    on_new: insert           # insert, skip, warn
+    # CHANGED（変更商品）の処理
+    on_changed: update       # update, skip, warn
+    # UNCHANGED（変更なし）の処理
+    on_unchanged: skip       # skip, log
+    # ORPHANED（ソースにない既存商品）の処理
+    on_orphaned: warn        # warn, delete, skip
+    # 確認プロンプトを表示
+    confirm_before_sync: true
+    # 差分サマリーを表示
+    show_diff_summary: true
+
+  # レポート設定
+  reporting:
+    # 差分レポートを出力
+    generate_diff_report: true
+    # レポート出力先
+    diff_report_path: ./logs/product-diff-{date}.json
+    # 変更詳細をログに記録
+    log_changes: true
+    # スナップショットを保存（次回比較用）
+    save_snapshot: true
+    snapshot_path: ./cache/product-snapshot-{date}.json
+
+# マルチモール商品コード統一設定
+master_products:
+  # マスター商品コードで統一管理
+  code_prefix: "MASTER-"
+
+  # モール別マッピング
+  mall_mappings:
+    # 楽天市場
+    rakuten:
+      enabled: true
+      code_field: "product_management_number"  # 商品管理番号
+      sync_fields:
+        - product_name
+        - price
+        - stock
+        - description
+      price_adjustment: 0  # 楽天用価格調整（円）
+
+    # Amazon
+    amazon:
+      enabled: true
+      code_field: "seller_sku"
+      asin_field: "asin"
+      sync_fields:
+        - product_name
+        - price
+        - stock
+        - description
+      fulfillment_channel: MFN  # MFN(自社出荷) or AFN(FBA)
+      price_adjustment: 0
+
+# 商品カテゴリマッピング
+categories:
+  mappings:
+    - internal: "衣類/トップス"
+      rakuten: "100371"
+      amazon: "Clothing"
+    - internal: "衣類/ボトムス"
+      rakuten: "100372"
+      amazon: "Clothing"
+    # 必要に応じて追加
+
+# バリデーション設定
+validation:
+  required_fields:
+    - product_code
+    - product_name
+    - price
+  price_range:
+    min: 1
+    max: 9999999
+  stock_range:
+    min: 0
+    max: 99999

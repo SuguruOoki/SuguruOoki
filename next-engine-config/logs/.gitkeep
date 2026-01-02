@@ -1,0 +1,3 @@
+# This directory stores sync logs
+# - product-sync-{date}.log: Sync execution logs
+# - product-diff-{date}.json: Diff detection reports

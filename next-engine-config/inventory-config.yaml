@@ -1,0 +1,74 @@
+# Next Engine 在庫管理設定
+# ================================
+# 楽天市場・Amazon連携用
+
+inventory:
+  # 在庫管理モード
+  # unified: 全モール統一在庫
+  # mall_specific: モール別在庫
+  mode: unified
+
+  # 同期設定
+  sync:
+    # 同期スケジュール（cron形式）
+    schedule: "*/10 * * * *"  # 10分ごと
+
+    # 即座同期トリガー
+    immediate_sync_on:
+      - order_received
+      - stock_update
+      - return_processed
+
+  # 倉庫設定
+  warehouses:
+    - warehouse_id: "WH001"
+      name: "メイン倉庫"
+      priority: 1
+      enabled: true
+    # - warehouse_id: "WH002"
+    #   name: "サブ倉庫"
+    #   priority: 2
+    #   enabled: true
+
+  # モール別在庫設定
+  mall_settings:
+    rakuten:
+      enabled: true
+      # 在庫数の調整（安全マージン）
+      safety_stock: 2
+      # 在庫0時の表示
+      zero_stock_display: "sold_out"
+
+    amazon:
+      enabled: true
+      safety_stock: 2
+      # FBA在庫との統合
+      include_fba_stock: false
+      # 自社出荷のみ管理
+      mfn_only: true
+
+  # 在庫アラート設定
+  alerts:
+    enabled: true
+    # 低在庫アラート閾値
+    low_stock_threshold: 10
+    # 在庫切れアラート
+    out_of_stock_alert: true
+    # 通知先
+    notification:
+      email:
+        - inventory@example.com
+      slack_webhook: ""
+
+  # 在庫ログ設定
+  logging:
+    enabled: true
+    retention_days: 90
+    log_changes: true
+    log_syncs: true
+
+# 在庫予約設定（注文確定前の仮押さえ）
+reservation:
+  enabled: true
+  timeout_minutes: 30
+  auto_release: true
