@@ -34,11 +34,14 @@ cp .env.example .env
 - `ANTHROPIC_API_KEY`: Claude API
 - `NOTION_API_KEY`: Notion Integration Token
 - `NOTION_DATABASE_ID`: 保存先データベースID
+- `NOTION_TODO_DATABASE_ID`: TODOデータベースID（オプション、設定しない場合は既存のデータベースに追加されます）
 
 ### 3. Notionデータベース作成
 
+#### Business Ideasデータベース
+
 ```bash
-npm run setup:notion <親ページID>
+npm run setup:notion ideas <親ページID>
 ```
 
 または手動で以下のプロパティを持つDBを作成:
@@ -50,6 +53,30 @@ npm run setup:notion <親ページID>
 - Potential (select): 可能性 (High/Medium/Low)
 - Original URL (url): 元ソース
 - Collected At (date): 収集日時
+
+#### TODOデータベース（オプション）
+
+優先度がHighのアイデアを自動的にTODOリストに追加する機能を使用する場合:
+
+```bash
+npm run setup:notion todos <親ページID>
+```
+
+または手動で以下のプロパティを持つDBを作成:
+- Name (title): TODOタイトル
+- Category (select): カテゴリ
+- Status (select): ステータス (Not Started/In Progress/Done/Archived)
+- Original URL (url): 元ソースURL
+- Idea Page (url): 元のアイデアページへのリンク
+- Priority (select): 優先度 (High/Medium/Low)
+- Created At (date): 作成日時
+
+TODOデータベースIDを環境変数に追加:
+```bash
+NOTION_TODO_DATABASE_ID=<TODOデータベースID>
+```
+
+**注意**: TODOデータベースIDが設定されていない場合、既存のBusiness IdeasデータベースにTODOが追加されます。
 
 ### 4. 設定ファイル編集
 
