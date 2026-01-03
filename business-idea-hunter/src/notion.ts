@@ -240,4 +240,248 @@ export class NotionDatabase {
 
     return urls;
   }
+
+  /**
+   * 優先度がHighのアイデアを取得
+   */
+  async getHighPriorityIdeas(): Promise<Array<{
+    id: string;
+    title: string;
+    idea: string;
+    painPoint: string;
+    category: string;
+    originalUrl?: string;
+  }>> {
+    try {
+      const dataSourceId = await this.getDataSourceId();
+      const response = (await this.request(
+        `/data_sources/${dataSourceId}/query`,
+        "POST",
+        {
+          filter: {
+            property: "Potential",
+            select: {
+              equals: "High",
+            },
+          },
+        }
+      )) as {
+        results: Array<{
+          id: string;
+          properties?: Record<string, unknown>;
+        }>;
+      };
+
+      const highPriorityIdeas: Array<{
+        id: string;
+        title: string;
+        idea: string;
+        painPoint: string;
+        category: string;
+        originalUrl?: string;
+      }> = [];
+
+      for (const page of response.results) {
+        if (!page.properties) continue;
+
+        const titleProp = page.properties.Title as
+          | { title?: Array<{ plain_text?: string }> }
+          | undefined;
+        const ideaProp = page.properties.Idea as
+          | { rich_text?: Array<{ plain_text?: string }> }
+          | undefined;
+        const painPointProp = page.properties["Pain Point"] as
+          | { rich_text?: Array<{ plain_text?: string }> }
+          | undefined;
+        const categoryProp = page.properties.Category as
+          | { select?: { name?: string } }
+          | undefined;
+        const urlProp = page.properties["Original URL"] as
+          | { url?: string }
+          | undefined;
+
+        const title =
+          titleProp?.title?.[0]?.plain_text || "Untitled";
+        const idea =
+          ideaProp?.rich_text?.[0]?.plain_text || "";
+        const painPoint =
+          painPointProp?.rich_text?.[0]?.plain_text || "";
+        const category = categoryProp?.select?.name || "その他";
+        const originalUrl = urlProp?.url;
+
+        highPriorityIdeas.push({
+          id: page.id,
+          title,
+          idea,
+          painPoint,
+          category,
+          originalUrl,
+        });
+      }
+
+      return highPriorityIdeas;
+    } catch (error) {
+      console.error("[notion] Error fetching high priority ideas:", error);
+      return [];
+    }
+  }
+
+  /**
+   * TODOリストを作成してNotionに追加
+   * @param todoDatabaseId TODOデータベースID（環境変数NOTION_TODO_DATABASE_IDまたは既存のデータベースID）
+   * @param ideas 追加するアイデアのリスト
+   */
+  async createTodos(
+    ideas: Array<{
+      id: string;
+      title: string;
+      idea: string;
+      painPoint: string;
+      category: string;
+      originalUrl?: string;
+    }>,
+    todoDatabaseId?: string
+  ): Promise<string[]> {
+    const targetDatabaseId = todoDatabaseId || process.env.NOTION_TODO_DATABASE_ID || this.databaseId;
+    
+    if (!targetDatabaseId) {
+      console.warn("[notion] No TODO database ID specified, skipping TODO creation");
+      return [];
+    }
+
+    const createdIds: string[] = [];
+
+    try {
+      // TODOデータベースのdata_source_idを取得
+      const todoDatabase = (await this.request(
+        `/databases/${targetDatabaseId}`,
+        "GET"
+      )) as { data_sources?: Array<{ id: string }> };
+
+      const todoDataSourceId =
+        todoDatabase.data_sources && todoDatabase.data_sources.length > 0
+          ? todoDatabase.data_sources[0].id
+          : targetDatabaseId;
+
+      for (const idea of ideas) {
+        try {
+          // 既存のアイデアページへのリンクを作成
+          const ideaPageUrl = `https://www.notion.so/${idea.id.replace(/-/g, "")}`;
+
+          // TODOページのプロパティ
+          const properties: Record<string, unknown> = {
+            Name: {
+              title: [
+                {
+                  text: {
+                    content: idea.title,
+                  },
+                },
+              ],
+            },
+          };
+
+          // カテゴリプロパティがある場合
+          if (idea.category) {
+            properties.Category = {
+              select: {
+                name: idea.category,
+              },
+            };
+          }
+
+          // 元のアイデアページへのリンクプロパティがある場合
+          if (idea.originalUrl) {
+            properties["Original URL"] = {
+              url: idea.originalUrl,
+            };
+          }
+
+          // アイデアページへのリンクプロパティがある場合
+          properties["Idea Page"] = {
+            url: ideaPageUrl,
+          };
+
+          // 優先度プロパティ（High固定）
+          properties.Priority = {
+            select: {
+              name: "High",
+            },
+          };
+
+          // ステータスプロパティ（Not Started固定）
+          properties.Status = {
+            select: {
+              name: "Not Started",
+            },
+          };
+
+          // 作成日時プロパティ
+          properties["Created At"] = {
+            date: {
+              start: new Date().toISOString(),
+            },
+          };
+
+          // ページ本文に詳細を追加
+          const children: unknown[] = [
+            {
+              object: "block",
+              type: "heading_3",
+              heading_3: {
+                rich_text: [
+                  { type: "text", text: { content: "課題・不満" } },
+                ],
+              },
+            },
+            {
+              object: "block",
+              type: "paragraph",
+              paragraph: {
+                rich_text: [
+                  { type: "text", text: { content: idea.painPoint || "なし" } },
+                ],
+              },
+            },
+            {
+              object: "block",
+              type: "heading_3",
+              heading_3: {
+                rich_text: [
+                  { type: "text", text: { content: "ビジネスアイデア" } },
+                ],
+              },
+            },
+            {
+              object: "block",
+              type: "paragraph",
+              paragraph: {
+                rich_text: [
+                  { type: "text", text: { content: idea.idea || "なし" } },
+                ],
+              },
+            },
+          ];
+
+          const page = await this.request("/pages", "POST", {
+            parent: {
+              type: "data_source_id",
+              data_source_id: todoDataSourceId,
+            },
+            properties,
+            children,
+          });
+
+          createdIds.push((page as { id: string }).id);
+          console.log(`[notion] Created TODO: ${idea.title}`);
+        } catch (error) {
+          console.error(`[notion] Error creating TODO for ${idea.title}:`, error);
+        }
+      }
+    } catch (error) {
+      console.error("[notion] Error creating TODOs:", error);
+    }
+
+    return createdIds;
+  }
 }

@@ -224,6 +224,32 @@ async function main(): Promise<void> {
       const notion = new NotionDatabase();
       const createdIds = await notion.saveIdeas(ideas);
       console.log(`   ✓ ${createdIds.length} ideas saved`);
+
+      // 優先度がHighのアイデアをTODOリストに追加
+      const highPriorityIdeas = ideas.filter((idea) => idea.potential === "High");
+      if (highPriorityIdeas.length > 0) {
+        console.log(`\n🎯 Creating TODO list for ${highPriorityIdeas.length} high priority ideas...`);
+        try {
+          // 保存直後なので、少し待ってから取得
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          
+          const highPriorityFromDb = await notion.getHighPriorityIdeas();
+          
+          // 今回保存したアイデアのみをフィルタリング（重複を避けるため）
+          const newlyCreatedHighPriority = highPriorityFromDb.filter((idea) =>
+            createdIds.some((id) => idea.id === id)
+          );
+
+          if (newlyCreatedHighPriority.length > 0) {
+            const todoIds = await notion.createTodos(newlyCreatedHighPriority);
+            console.log(`   ✓ ${todoIds.length} TODOs created`);
+          } else {
+            console.log("   ⚠ No new high priority ideas found in database");
+          }
+        } catch (error) {
+          console.error("   ✗ TODO creation error:", error);
+        }
+      }
     } catch (error) {
       console.error("   ✗ Save error:", error);
     }
