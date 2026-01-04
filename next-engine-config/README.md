@@ -418,6 +418,106 @@ curl -H "Authorization: Bearer $OPENLOGI_API_KEY" \
   https://api.openlogi.com/v1/ping
 ```
 
+### ブラウザ自動操作（API利用不可時）
+
+APIが利用できない、または上限に達した場合、自動的にブラウザ操作にフォールバックします。
+
+#### 初期セットアップ
+
+```bash
+# Puppeteerをインストール
+npm install puppeteer
+
+# 2要素認証を使用する場合
+npm install speakeasy
+```
+
+#### 環境変数の設定
+
+`.env` ファイルにブラウザログイン情報を追加：
+
+```bash
+# オープンロジブラウザログイン情報
+OPENLOGI_BROWSER_USERNAME="your-email@example.com"
+OPENLOGI_BROWSER_PASSWORD="your-password"
+
+# 2要素認証（オプション）
+OPENLOGI_TOTP_SECRET="your-totp-secret"
+```
+
+#### 設定ファイルの確認
+
+`openlogi-config.yaml` でブラウザ自動操作が有効になっていることを確認：
+
+```yaml
+browser_automation:
+  enabled: true
+
+  use_when:
+    api_unavailable: true
+    api_limit_reached: true
+    consecutive_api_errors: 3
+
+  browser:
+    engine: "chromium"
+    headless: true
+```
+
+#### フォールバック動作
+
+1. **通常時**: APIで処理
+2. **API連続エラー3回**: 自動的にブラウザ操作に切り替え
+3. **ブラウザ操作失敗**: 手動処理へフォールバック
+
+#### ブラウザ操作の監視
+
+```bash
+# ブラウザ操作ログを確認
+tail -f ./logs/browser-automation.log
+
+# スクリーンショットを確認
+ls -la ./logs/browser-screenshots/
+
+# エラー時のHTML保存先
+ls -la ./logs/browser-errors/
+```
+
+#### .gitignoreへの追加
+
+ブラウザ自動操作関連ファイルをGit管理対象外にする：
+
+```bash
+# .gitignore に以下を追加
+echo "" >> .gitignore
+echo "# Browser Automation" >> .gitignore
+echo "next-engine-config/cache/openlogi-session.json" >> .gitignore
+echo "next-engine-config/logs/browser-screenshots/" >> .gitignore
+echo "next-engine-config/logs/browser-errors/" >> .gitignore
+echo "next-engine-config/logs/browser-automation.log" >> .gitignore
+```
+
+#### 通知設定
+
+ブラウザ操作への切り替え時に通知を受け取る：
+
+```yaml
+# openlogi-config.yaml
+browser_automation:
+  notifications:
+    on_browser_fallback:
+      enabled: true
+      method: "email"
+      message: "API利用不可のため、ブラウザ自動操作に切り替えました"
+```
+
+#### 本番環境での注意事項
+
+1. **ヘッドレスモード**: 本番環境では `headless: true` を推奨
+2. **セッション管理**: Cookie保存でログイン回数を削減
+3. **エラー通知**: 管理者への即時通知を有効化
+4. **スクリーンショット**: トラブル調査のため保存を推奨
+5. **リソース最適化**: 画像・フォント読み込みを無効化してパフォーマンス向上
+
 ### 参考資料
 
 - [オープンロジ公式サイト](https://openlogi.com/)

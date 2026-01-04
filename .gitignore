@@ -19,3 +19,9 @@ next-engine-config/workers/api-usage-manager/node_modules/
 next-engine-config/workers/api-usage-manager/.dev.vars
 next-engine-config/workers/api-usage-manager/dist/
 next-engine-config/workers/api-usage-manager/.wrangler/
+
+# Browser Automation (Openlogi Fallback)
+next-engine-config/cache/openlogi-session.json
+next-engine-config/logs/browser-screenshots/
+next-engine-config/logs/browser-errors/
+next-engine-config/logs/browser-automation.log

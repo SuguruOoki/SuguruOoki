@@ -1815,8 +1815,634 @@ workflow:
 - `.env` ファイルは `.gitignore` に追加済み
 - 本番環境とテスト環境で異なるAPI キーを使用
 
+### ブラウザ自動操作（API利用不可時のフォールバック）
+
+API が利用できない場合、Puppeteer を使用してブラウザを自動操作します。
+
+#### 依存関係のインストール
+
+```bash
+npm install puppeteer
+# または
+yarn add puppeteer
+```
+
+#### ブラウザ自動操作クライアントの実装
+
+```typescript
+import puppeteer, { Browser, Page } from 'puppeteer';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
+interface BrowserConfig {
+  headless: boolean;
+  viewport: { width: number; height: number };
+  userAgent: string;
+}
+
+interface LoginCredentials {
+  username: string;
+  password: string;
+  totpSecret?: string;
+}
+
+interface ShipmentData {
+  orderNumber: string;
+  customerName: string;
+  customerAddress: string;
+  customerPhone: string;
+  items: Array<{
+    sku: string;
+    quantity: number;
+  }>;
+  deliveryDate?: string;
+  deliveryTime?: string;
+  notes?: string;
+}
+
+class OpenlogiBrowserClient {
+  private browser: Browser | null = null;
+  private page: Page | null = null;
+  private config: BrowserConfig;
+  private sessionCookiePath: string;
+
+  constructor() {
+    const browserConfig = openlogiConfig.browser_automation.browser;
+    this.config = {
+      headless: browserConfig.headless,
+      viewport: browserConfig.launch_options.viewport,
+      userAgent: openlogiConfig.browser_automation.security.user_agent,
+    };
+    this.sessionCookiePath = openlogiConfig.browser_automation.authentication.session.cookie_file;
+  }
+
+  /**
+   * ブラウザを起動
+   */
+  async launch(): Promise<void> {
+    console.log('🌐 ブラウザを起動中...');
+
+    this.browser = await puppeteer.launch({
+      headless: this.config.headless,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+      ],
+    });
+
+    this.page = await this.browser.newPage();
+
+    // ビューポート設定
+    await this.page.setViewport(this.config.viewport);
+
+    // User-Agent 設定
+    await this.page.setUserAgent(this.config.userAgent);
+
+    // コンソールログの記録
+    if (openlogiConfig.browser_automation.logging.console_logs) {
+      this.page.on('console', msg => {
+        console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`);
+      });
+    }
+
+    // ネットワークリクエストの記録
+    if (openlogiConfig.browser_automation.logging.network_logs) {
+      await this.page.setRequestInterception(true);
+      this.page.on('request', request => {
+        console.log(`[Network] ${request.method()} ${request.url()}`);
+        request.continue();
+      });
+    }
+
+    console.log('✅ ブラウザ起動完了');
+  }
+
+  /**
+   * セッションCookieを読み込み
+   */
+  private async loadSessionCookies(): Promise<boolean> {
+    try {
+      const cookieData = await fs.readFile(this.sessionCookiePath, 'utf-8');
+      const cookies = JSON.parse(cookieData);
+
+      if (!this.page) return false;
+
+      await this.page.setCookie(...cookies);
+      console.log('✅ セッションCookieを読み込みました');
+      return true;
+    } catch (error) {
+      console.log('ℹ️ セッションCookieが見つかりません。ログインが必要です。');
+      return false;
+    }
+  }
+
+  /**
+   * セッションCookieを保存
+   */
+  private async saveSessionCookies(): Promise<void> {
+    if (!this.page) return;
+
+    const cookies = await this.page.cookies();
+    await fs.mkdir(path.dirname(this.sessionCookiePath), { recursive: true });
+    await fs.writeFile(this.sessionCookiePath, JSON.stringify(cookies, null, 2));
+    console.log('✅ セッションCookieを保存しました');
+  }
+
+  /**
+   * ログイン処理
+   */
+  async login(credentials: LoginCredentials): Promise<void> {
+    if (!this.page) {
+      throw new Error('ブラウザが起動していません');
+    }
+
+    console.log('🔐 ログイン処理を開始...');
+
+    const authConfig = openlogiConfig.browser_automation.authentication;
+
+    // ログインページへ移動
+    await this.page.goto(authConfig.login_url, {
+      waitUntil: 'networkidle2',
+      timeout: openlogiConfig.browser_automation.error_handling.timeouts.page_load,
+    });
+
+    // ユーザー名入力
+    await this.page.type('input[name="username"]', credentials.username, {
+      delay: openlogiConfig.browser_automation.tasks.create_shipment.input_delay,
+    });
+
+    // パスワード入力
+    await this.page.type('input[name="password"]', credentials.password, {
+      delay: openlogiConfig.browser_automation.tasks.create_shipment.input_delay,
+    });
+
+    // ログインボタンをクリック
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+      this.page.click('button[type="submit"]'),
+    ]);
+
+    // 2要素認証（必要な場合）
+    if (authConfig.two_factor.enabled && credentials.totpSecret) {
+      await this.handle2FA(credentials.totpSecret);
+    }
+
+    // セッションCookieを保存
+    if (authConfig.session.save_cookies) {
+      await this.saveSessionCookies();
+    }
+
+    console.log('✅ ログイン完了');
+  }
+
+  /**
+   * 2要素認証の処理
+   */
+  private async handle2FA(totpSecret: string): Promise<void> {
+    if (!this.page) return;
+
+    console.log('🔐 2要素認証処理...');
+
+    // TOTP コードを生成（speakeasyライブラリなどを使用）
+    const speakeasy = require('speakeasy');
+    const token = speakeasy.totp({
+      secret: totpSecret,
+      encoding: 'base32',
+    });
+
+    // TOTPコードを入力
+    await this.page.type('input[name="totp"]', token);
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+      this.page.click('button[type="submit"]'),
+    ]);
+
+    console.log('✅ 2要素認証完了');
+  }
+
+  /**
+   * 出荷指示を登録
+   */
+  async createShipment(shipmentData: ShipmentData): Promise<void> {
+    if (!this.page) {
+      throw new Error('ブラウザが起動していません');
+    }
+
+    console.log(`📦 出荷指示を登録: ${shipmentData.orderNumber}`);
+
+    const taskConfig = openlogiConfig.browser_automation.tasks.create_shipment;
+    const selectors = taskConfig.selectors;
+
+    try {
+      // 出荷登録ページへ移動
+      await this.page.goto(taskConfig.page_url, {
+        waitUntil: 'networkidle2',
+        timeout: openlogiConfig.browser_automation.error_handling.timeouts.page_load,
+      });
+
+      // 注文番号
+      await this.page.waitForSelector(selectors.order_number, {
+        timeout: openlogiConfig.browser_automation.error_handling.timeouts.element_wait,
+      });
+      await this.page.type(selectors.order_number, shipmentData.orderNumber, {
+        delay: taskConfig.input_delay,
+      });
+
+      // 顧客情報
+      await this.page.type(selectors.customer_name, shipmentData.customerName, {
+        delay: taskConfig.input_delay,
+      });
+      await this.page.type(selectors.customer_address, shipmentData.customerAddress, {
+        delay: taskConfig.input_delay,
+      });
+      await this.page.type(selectors.customer_phone, shipmentData.customerPhone, {
+        delay: taskConfig.input_delay,
+      });
+
+      // 商品情報
+      for (let i = 0; i < shipmentData.items.length; i++) {
+        const item = shipmentData.items[i];
+
+        // 商品行を追加（2行目以降）
+        if (i > 0) {
+          await this.page.click('.add-item-button');
+          await this.page.waitForTimeout(500);
+        }
+
+        // SKUと数量を入力
+        await this.page.type(`${selectors.item_sku}:nth-of-type(${i + 1})`, item.sku, {
+          delay: taskConfig.input_delay,
+        });
+        await this.page.type(`${selectors.item_quantity}:nth-of-type(${i + 1})`, item.quantity.toString(), {
+          delay: taskConfig.input_delay,
+        });
+      }
+
+      // 配送日時（オプション）
+      if (shipmentData.deliveryDate) {
+        await this.page.type(selectors.delivery_date, shipmentData.deliveryDate, {
+          delay: taskConfig.input_delay,
+        });
+      }
+      if (shipmentData.deliveryTime) {
+        await this.page.select(selectors.delivery_time, shipmentData.deliveryTime);
+      }
+
+      // 備考（オプション）
+      if (shipmentData.notes) {
+        await this.page.type(selectors.notes, shipmentData.notes, {
+          delay: taskConfig.input_delay,
+        });
+      }
+
+      // スクリーンショット（送信前）
+      await this.takeScreenshot(`shipment-${shipmentData.orderNumber}-before-submit`);
+
+      // 確認ダイアログの処理
+      if (taskConfig.confirm_dialogs) {
+        this.page.on('dialog', async dialog => {
+          console.log(`[Dialog] ${dialog.message()}`);
+          await dialog.accept();
+        });
+      }
+
+      // 送信ボタンをクリック
+      await Promise.all([
+        this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+        this.page.click(selectors.submit_button),
+      ]);
+
+      // ページ遷移待機
+      await this.page.waitForTimeout(taskConfig.page_transition_delay);
+
+      // スクリーンショット（送信後）
+      await this.takeScreenshot(`shipment-${shipmentData.orderNumber}-after-submit`);
+
+      console.log(`✅ 出荷指示登録完了: ${shipmentData.orderNumber}`);
+    } catch (error) {
+      console.error(`❌ 出荷指示登録エラー: ${shipmentData.orderNumber}`, error);
+
+      // エラー時のスクリーンショット
+      await this.takeScreenshot(`error-shipment-${shipmentData.orderNumber}`);
+
+      // HTML保存
+      if (openlogiConfig.browser_automation.error_handling.save_html_on_error) {
+        await this.savePageHTML(`error-shipment-${shipmentData.orderNumber}`);
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * 在庫情報を取得
+   */
+  async fetchInventory(): Promise<Array<{ sku: string; quantity: number; location: string }>> {
+    if (!this.page) {
+      throw new Error('ブラウザが起動していません');
+    }
+
+    console.log('📊 在庫情報を取得中...');
+
+    const taskConfig = openlogiConfig.browser_automation.tasks.fetch_inventory;
+    const selectors = taskConfig.selectors;
+    const inventory: Array<{ sku: string; quantity: number; location: string }> = [];
+
+    await this.page.goto(taskConfig.page_url, {
+      waitUntil: 'networkidle2',
+    });
+
+    let currentPage = 1;
+    const maxPages = taskConfig.pagination.max_pages;
+
+    while (currentPage <= maxPages) {
+      console.log(`ページ ${currentPage} を処理中...`);
+
+      // テーブルを待機
+      await this.page.waitForSelector(selectors.inventory_table);
+
+      // 在庫データを抽出
+      const pageInventory = await this.page.evaluate((selectors) => {
+        const rows = document.querySelectorAll(`${selectors.inventory_table} tbody tr`);
+        const data: Array<{ sku: string; quantity: number; location: string }> = [];
+
+        rows.forEach(row => {
+          const sku = row.querySelector(selectors.sku_column)?.textContent?.trim() || '';
+          const quantityText = row.querySelector(selectors.quantity_column)?.textContent?.trim() || '0';
+          const quantity = parseInt(quantityText, 10);
+          const location = row.querySelector(selectors.location_column)?.textContent?.trim() || '';
+
+          if (sku) {
+            data.push({ sku, quantity, location });
+          }
+        });
+
+        return data;
+      }, selectors);
+
+      inventory.push(...pageInventory);
+
+      // 次のページへ
+      if (taskConfig.pagination.enabled) {
+        const hasNextPage = await this.page.$(taskConfig.pagination.next_button);
+        if (hasNextPage) {
+          await this.page.click(taskConfig.pagination.next_button);
+          await this.page.waitForTimeout(2000);
+          currentPage++;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+
+    console.log(`✅ 在庫情報取得完了: ${inventory.length}件`);
+    return inventory;
+  }
+
+  /**
+   * スクリーンショットを保存
+   */
+  private async takeScreenshot(filename: string): Promise<void> {
+    if (!this.page) return;
+
+    const screenshotDir = openlogiConfig.browser_automation.browser.screenshot_dir;
+    await fs.mkdir(screenshotDir, { recursive: true });
+
+    const filepath = path.join(screenshotDir, `${filename}.png`);
+    await this.page.screenshot({ path: filepath, fullPage: true });
+    console.log(`📸 スクリーンショット保存: ${filepath}`);
+  }
+
+  /**
+   * ページHTMLを保存
+   */
+  private async savePageHTML(filename: string): Promise<void> {
+    if (!this.page) return;
+
+    const htmlDir = openlogiConfig.browser_automation.error_handling.html_output_dir;
+    await fs.mkdir(htmlDir, { recursive: true });
+
+    const html = await this.page.content();
+    const filepath = path.join(htmlDir, `${filename}.html`);
+    await fs.writeFile(filepath, html);
+    console.log(`💾 HTML保存: ${filepath}`);
+  }
+
+  /**
+   * ブラウザを終了
+   */
+  async close(): Promise<void> {
+    if (this.browser) {
+      await this.browser.close();
+      this.browser = null;
+      this.page = null;
+      console.log('✅ ブラウザ終了');
+    }
+  }
+}
+```
+
+#### ブラウザ自動操作を使用したワークフロー
+
+```typescript
+/**
+ * API利用不可時のフォールバック処理
+ */
+class OpenlogiFallbackWorkflow {
+  private apiClient: OpenlogiClient;
+  private browserClient: OpenlLogiBrowserClient;
+  private consecutiveApiErrors: number = 0;
+
+  constructor() {
+    this.apiClient = new OpenlogiClient();
+    this.browserClient = new OpenlLogiBrowserClient();
+  }
+
+  /**
+   * ブラウザ自動操作を使用すべきか判定
+   */
+  private shouldUseBrowserAutomation(): boolean {
+    const config = openlogiConfig.browser_automation;
+
+    if (!config.enabled) {
+      return false;
+    }
+
+    const useWhen = config.use_when;
+
+    // APIエラー連続発生時
+    if (this.consecutiveApiErrors >= useWhen.consecutive_api_errors) {
+      console.log('⚠️ API連続エラー検出。ブラウザ自動操作に切り替えます。');
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * 出荷指示を送信（フォールバック付き）
+   */
+  async sendShipmentInstruction(order: Order): Promise<void> {
+    try {
+      // まずAPIを試行
+      if (!this.shouldUseBrowserAutomation()) {
+        await this.apiClient.createShipment(order);
+        this.consecutiveApiErrors = 0; // 成功したのでリセット
+        return;
+      }
+    } catch (error) {
+      console.error('❌ API呼び出しエラー:', error);
+      this.consecutiveApiErrors++;
+
+      // ブラウザ自動操作にフォールバック
+      if (this.shouldUseBrowserAutomation()) {
+        await this.sendShipmentViaBrowser(order);
+        return;
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * ブラウザ自動操作で出荷指示を送信
+   */
+  private async sendShipmentViaBrowser(order: Order): Promise<void> {
+    console.log('🌐 ブラウザ自動操作で出荷指示を送信します');
+
+    try {
+      // ブラウザ起動
+      await this.browserClient.launch();
+
+      // セッションCookieを読み込み、必要ならログイン
+      const hasSession = await this.browserClient['loadSessionCookies']();
+      if (!hasSession) {
+        const credentials = {
+          username: process.env.OPENLOGI_BROWSER_USERNAME!,
+          password: process.env.OPENLOGI_BROWSER_PASSWORD!,
+          totpSecret: process.env.OPENLOGI_TOTP_SECRET,
+        };
+        await this.browserClient.login(credentials);
+      }
+
+      // 出荷指示を登録
+      const shipmentData: ShipmentData = {
+        orderNumber: order.order_id,
+        customerName: order.customer_name,
+        customerAddress: order.address,
+        customerPhone: order.phone,
+        items: order.items.map(item => ({
+          sku: item.sku,
+          quantity: item.quantity,
+        })),
+        deliveryDate: order.delivery_date,
+        deliveryTime: order.delivery_time,
+        notes: order.notes,
+      };
+
+      await this.browserClient.createShipment(shipmentData);
+
+      console.log('✅ ブラウザ自動操作による出荷指示送信完了');
+
+      // 通知
+      if (openlogiConfig.browser_automation.notifications.on_browser_fallback.enabled) {
+        await this.sendFallbackNotification(order);
+      }
+
+    } catch (error) {
+      console.error('❌ ブラウザ自動操作エラー:', error);
+      throw error;
+    } finally {
+      // ブラウザインスタンスの再利用設定を確認
+      if (!openlogiConfig.browser_automation.performance.reuse_browser) {
+        await this.browserClient.close();
+      }
+    }
+  }
+
+  /**
+   * フォールバック通知を送信
+   */
+  private async sendFallbackNotification(order: Order): Promise<void> {
+    const message = `
+API利用不可のため、ブラウザ自動操作に切り替えました。
+
+注文番号: ${order.order_id}
+顧客名: ${order.customer_name}
+`;
+
+    // メール送信処理（実装は省略）
+    console.log('📧 フォールバック通知送信:', message);
+  }
+
+  /**
+   * クリーンアップ
+   */
+  async cleanup(): Promise<void> {
+    await this.browserClient.close();
+  }
+}
+```
+
+#### 使用例
+
+```typescript
+// フォールバックワークフローの使用
+const workflow = new OpenlogiFallbackWorkflow();
+
+try {
+  // 注文データ
+  const order: Order = {
+    order_id: 'ORDER-12345',
+    customer_name: '山田太郎',
+    address: '東京都渋谷区...',
+    phone: '090-1234-5678',
+    items: [
+      { sku: 'SKU-001', quantity: 2 },
+      { sku: 'SKU-002', quantity: 1 },
+    ],
+    delivery_date: '2024-12-25',
+    delivery_time: '午前中',
+    notes: '置き配希望',
+  };
+
+  // API優先、エラー時は自動的にブラウザ操作へフォールバック
+  await workflow.sendShipmentInstruction(order);
+
+} catch (error) {
+  console.error('出荷指示送信に失敗しました:', error);
+} finally {
+  await workflow.cleanup();
+}
+```
+
+#### 必要な追加パッケージ
+
+2要素認証（TOTP）を使用する場合:
+
+```bash
+npm install speakeasy
+npm install @types/speakeasy --save-dev
+```
+
+#### .gitignore への追加
+
+```gitignore
+# ブラウザ自動操作関連
+next-engine-config/cache/openlogi-session.json
+next-engine-config/logs/browser-screenshots/
+next-engine-config/logs/browser-errors/
+next-engine-config/logs/browser-automation.log
+```
+
 ### 参考資料
 
 - [オープンロジ公式サイト](https://openlogi.com/)
 - [オープンロジAPI ドキュメント](https://openlogi.com/api-docs/)
+- [Puppeteer ドキュメント](https://pptr.dev/)
 - 設定ファイル: `shipping-config.yaml`, `openlogi-config.yaml`

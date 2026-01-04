@@ -217,10 +217,26 @@ openlogi:
 
     # エラー時のフォールバック
     fallback:
-      # オープンロジ連携失敗時は手動処理に切り替え
-      use_manual_shipping: true
-      # 通知方法
-      fallback_notification: "email"  # email, slack, webhook
+      # API失敗時の優先順位
+      priority:
+        - browser_automation  # まずブラウザ自動操作を試行
+        - manual_shipping     # それでも失敗したら手動処理
+
+      # ブラウザ自動操作フォールバック
+      browser_automation:
+        enabled: true
+        # 詳細設定は openlogi-config.yaml を参照
+        config_file: "./openlogi-config.yaml"
+        # 連続APIエラー回数でブラウザ操作に切り替え
+        trigger_on_consecutive_errors: 3
+        # ブラウザ操作失敗時の動作
+        on_browser_failure: "manual_shipping"  # manual_shipping, skip, retry_api
+
+      # 手動処理フォールバック
+      manual_shipping:
+        enabled: true
+        # 通知方法
+        notification: "email"  # email, slack, webhook
 
   # 料金設定
   pricing:

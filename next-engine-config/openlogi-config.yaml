@@ -461,3 +461,185 @@ testing:
     enabled: false
     api_endpoint: "https://sandbox-api.openlogi.com/v1"
     api_key_env: "OPENLOGI_SANDBOX_API_KEY"
+
+# ブラウザ自動操作（API利用不可時のフォールバック）
+# ================================
+browser_automation:
+  # ブラウザ自動操作の有効化
+  enabled: true
+
+  # 自動操作を使用する条件
+  use_when:
+    # API利用不可時
+    api_unavailable: true
+    # API上限到達時
+    api_limit_reached: true
+    # APIエラー連続発生時
+    consecutive_api_errors: 3
+
+  # ブラウザ設定
+  browser:
+    # ブラウザエンジン
+    engine: "chromium"  # chromium, firefox, webkit
+    # ヘッドレスモード
+    headless: true
+    # スクリーンショット保存
+    screenshot_on_error: true
+    screenshot_dir: "./logs/browser-screenshots/"
+    # ブラウザ起動オプション
+    launch_options:
+      # 遅いネットワーク環境でのタイムアウト延長
+      timeout: 60000
+      # ブラウザウィンドウサイズ
+      viewport:
+        width: 1920
+        height: 1080
+
+  # 認証設定
+  authentication:
+    # ログイン情報（環境変数から取得）
+    login_url: "https://www.openlogi.com/login"
+    username_env: "OPENLOGI_BROWSER_USERNAME"
+    password_env: "OPENLOGI_BROWSER_PASSWORD"
+    # 2要素認証
+    two_factor:
+      enabled: false
+      method: "totp"  # totp, sms, email
+      totp_secret_env: "OPENLOGI_TOTP_SECRET"
+    # ログイン状態の保持
+    session:
+      # セッションCookieの保存
+      save_cookies: true
+      cookie_file: "./cache/openlogi-session.json"
+      # セッション有効期限（時間）
+      session_lifetime_hours: 24
+
+  # 自動操作タスク
+  tasks:
+    # 出荷指示の登録
+    create_shipment:
+      enabled: true
+      # ページURL
+      page_url: "https://www.openlogi.com/shipments/new"
+      # セレクター定義
+      selectors:
+        order_number: "#order_number"
+        customer_name: "#customer_name"
+        customer_address: "#customer_address"
+        customer_phone: "#customer_phone"
+        item_sku: ".item-sku"
+        item_quantity: ".item-quantity"
+        delivery_date: "#delivery_date"
+        delivery_time: "#delivery_time"
+        notes: "#notes"
+        submit_button: "button[type='submit']"
+      # 入力待機時間（ミリ秒）
+      input_delay: 100
+      # ページ遷移待機時間（ミリ秒）
+      page_transition_delay: 2000
+      # 確認ダイアログの処理
+      confirm_dialogs: true
+
+    # 在庫情報の取得
+    fetch_inventory:
+      enabled: true
+      page_url: "https://www.openlogi.com/inventory"
+      selectors:
+        inventory_table: "#inventory-table"
+        sku_column: ".sku"
+        quantity_column: ".quantity"
+        location_column: ".location"
+      # ページネーション
+      pagination:
+        enabled: true
+        next_button: ".pagination .next"
+        max_pages: 100
+
+    # 出荷ステータスの確認
+    check_status:
+      enabled: true
+      page_url: "https://www.openlogi.com/shipments"
+      selectors:
+        status_table: "#shipments-table"
+        order_number_column: ".order-number"
+        status_column: ".status"
+        tracking_number_column: ".tracking-number"
+      # フィルター設定
+      filters:
+        date_range: "last_7_days"
+        status: ["processing", "shipped"]
+
+  # エラーハンドリング
+  error_handling:
+    # スクリーンショット
+    screenshot_on_error: true
+    # HTMLソースの保存
+    save_html_on_error: true
+    html_output_dir: "./logs/browser-errors/"
+    # リトライ設定
+    retry:
+      enabled: true
+      max_attempts: 3
+      interval_seconds: 5
+      # リトライ時にブラウザを再起動
+      restart_browser: true
+    # タイムアウト
+    timeouts:
+      # ページロード
+      page_load: 30000
+      # 要素の出現待機
+      element_wait: 10000
+      # ネットワーク応答
+      network_idle: 5000
+
+  # パフォーマンス最適化
+  performance:
+    # 複数タスクの並列実行
+    parallel_tasks: false
+    # ブラウザインスタンスの再利用
+    reuse_browser: true
+    # ページキャッシュ
+    cache_enabled: true
+    # 画像・CSS・フォントの読み込み
+    load_resources:
+      images: false
+      stylesheets: true
+      fonts: false
+      scripts: true
+
+  # セキュリティ
+  security:
+    # User-Agent
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    # Proxy設定（オプション）
+    proxy:
+      enabled: false
+      server: ""
+      username_env: ""
+      password_env: ""
+    # SSL証明書の検証
+    ignore_https_errors: false
+
+  # ログ・デバッグ
+  logging:
+    # ブラウザコンソールログの記録
+    console_logs: true
+    # ネットワークリクエストの記録
+    network_logs: true
+    # ログファイル
+    log_file: "./logs/browser-automation.log"
+    # ログレベル
+    log_level: "info"  # debug, info, warn, error
+
+  # 通知
+  notifications:
+    # ブラウザ自動操作実行時の通知
+    on_browser_fallback:
+      enabled: true
+      method: "email"
+      message: "API利用不可のため、ブラウザ自動操作に切り替えました"
+    # エラー時の通知
+    on_error:
+      enabled: true
+      method: "email"
+      include_screenshot: true
