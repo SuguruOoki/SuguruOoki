@@ -2,6 +2,33 @@
 # ================================
 # 物流代行サービス「オープンロジ」との連携詳細設定
 
+# 環境チェック設定（セーフティ機能）
+# ================================
+# テスト環境でのオープンロジ連携を防止
+# shipping-config.yamlのenvironment_checkセクションと連動
+environment_check:
+  # 本番環境のみで実行を許可
+  enabled: true
+
+  # 実行前チェック
+  pre_execution_check:
+    # Next Engine環境変数の検証
+    validate_next_engine_env: true
+    # オープンロジAPI認証情報の検証
+    validate_openlogi_credentials: true
+
+  # 警告レベル
+  warning_on_suspicious_patterns: true
+  # 疑わしいパターン
+  suspicious_patterns:
+    - "localhost"
+    - "127.0.0.1"
+    - "development"
+    - "staging"
+
+  # セーフティネット
+  require_explicit_production_flag: false  # trueの場合、OPENLOGI_PRODUCTION=trueが必須
+
 # 倉庫設定
 warehouse:
   # 利用倉庫

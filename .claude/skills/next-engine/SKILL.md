@@ -1332,6 +1332,65 @@ const openlogiConfig = yaml.load(
   fs.readFileSync('next-engine-config/openlogi-config.yaml', 'utf8')
 ) as any;
 
+// 環境検証クラス（テスト環境をブロック）
+class EnvironmentValidator {
+  private config: any;
+
+  constructor(config: any) {
+    this.config = config.openlogi.environment_check;
+  }
+
+  /**
+   * Next Engine環境の検証
+   * テスト環境の場合は例外をスロー
+   */
+  validate(): void {
+    if (!this.config.production_only) {
+      return; // 本番環境チェックが無効の場合はスキップ
+    }
+
+    const clientId = process.env.NEXT_ENGINE_CLIENT_ID || '';
+    const clientSecret = process.env.NEXT_ENGINE_CLIENT_SECRET || '';
+    const apiBaseUrl = process.env.NEXT_ENGINE_API_BASE_URL || '';
+    const environment = process.env.NEXT_ENGINE_ENV || '';
+
+    const detectedIssues: string[] = [];
+
+    // テスト環境パターンのチェック
+    this.config.test_environment_patterns.forEach((pattern: any) => {
+      const regex = new RegExp(pattern.pattern, 'i');
+
+      if (pattern.field === 'client_id' && regex.test(clientId)) {
+        detectedIssues.push(pattern.description);
+      }
+      if (pattern.field === 'api_url' && regex.test(apiBaseUrl)) {
+        detectedIssues.push(pattern.description);
+      }
+      if (pattern.field === 'environment' && regex.test(environment)) {
+        detectedIssues.push(pattern.description);
+      }
+    });
+
+    // テスト環境が検出された場合
+    if (detectedIssues.length > 0) {
+      // 強制実行オプションのチェック
+      const forceAllow = process.env.OPENLOGI_FORCE_ALLOW_TEST === 'true';
+      if (forceAllow && this.config.on_test_environment_detected.allow_override) {
+        console.warn('⚠️  OPENLOGI_FORCE_ALLOW_TEST=true により強制実行します（本番環境では使用厳禁）');
+        return;
+      }
+
+      // エラーメッセージの構築
+      const message = this.config.on_test_environment_detected.message + '\n\n検出された問題:\n' +
+        detectedIssues.map((issue: string) => `  - ${issue}`).join('\n');
+
+      throw new Error(message);
+    }
+
+    console.log('✓ 本番環境が確認されました');
+  }
+}
+
 // オープンロジAPIクライアント
 class OpenlogiClient {
   private apiKey: string;
@@ -1414,8 +1473,13 @@ class OpenlogiClient {
 class OpenlogiWorkflow {
   private nextEngineClient: NextEngineClient;
   private openlogiClient: OpenlogiClient;
+  private environmentValidator: EnvironmentValidator;
 
   constructor() {
+    // 環境検証（テスト環境をブロック）
+    this.environmentValidator = new EnvironmentValidator(shippingConfig);
+    this.environmentValidator.validate(); // テスト環境の場合はここで例外がスローされる
+
     this.nextEngineClient = new NextEngineClient();
     this.openlogiClient = new OpenlogiClient();
   }

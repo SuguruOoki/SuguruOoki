@@ -169,6 +169,9 @@ class OpenlogiSetup {
       // ステップ1: 環境確認
       await this.checkEnvironment();
 
+      // Next Engine環境の検証（テスト環境をブロック）
+      await this.validateNextEngineEnvironment();
+
       // ステップ2: 設定情報の収集
       await this.collectConfiguration();
 
@@ -225,6 +228,105 @@ class OpenlogiSetup {
     }
 
     console.log('');
+  }
+
+  /**
+   * Next Engine環境の検証（テスト環境をブロック）
+   */
+  private async validateNextEngineEnvironment(): Promise<void> {
+    console.log('🔒 Next Engine環境の検証\n');
+
+    // .envファイルから環境変数を読み込む
+    const envPath = path.join(process.cwd(), '.env');
+    let envVars: Record<string, string> = {};
+
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf-8');
+      envContent.split('\n').forEach((line) => {
+        const match = line.match(/^([^#][^=]+)=(.*)$/);
+        if (match) {
+          const key = match[1].trim();
+          const value = match[2].trim().replace(/^["']|["']$/g, '');
+          envVars[key] = value;
+        }
+      });
+    }
+
+    // 環境変数とプロセス環境変数をマージ
+    const allEnvVars = { ...envVars, ...process.env };
+
+    const clientId = allEnvVars.NEXT_ENGINE_CLIENT_ID || '';
+    const clientSecret = allEnvVars.NEXT_ENGINE_CLIENT_SECRET || '';
+    const apiBaseUrl = allEnvVars.NEXT_ENGINE_API_BASE_URL || '';
+    const environment = allEnvVars.NEXT_ENGINE_ENV || '';
+
+    const testPatterns = [
+      { pattern: /test_/i, field: 'CLIENT_ID', description: 'CLIENT_IDに"test_"プレフィックスがある' },
+      { pattern: /sample/i, field: 'CLIENT_ID', description: 'CLIENT_IDに"sample"が含まれる' },
+      { pattern: /demo/i, field: 'CLIENT_ID', description: 'CLIENT_IDに"demo"が含まれる' },
+      { pattern: /example/i, field: 'CLIENT_ID', description: 'CLIENT_IDに"example"が含まれる' },
+      { pattern: /test_/i, field: 'CLIENT_SECRET', description: 'CLIENT_SECRETに"test_"プレフィックスがある' },
+      { pattern: /\/test\//i, field: 'API_URL', description: 'API URLにテストパスが含まれる' },
+      { pattern: /test|development|dev|staging/i, field: 'ENVIRONMENT', description: '環境変数がテスト環境を示している' },
+    ];
+
+    const detectedIssues: string[] = [];
+
+    // CLIENT_IDの検証
+    testPatterns.filter((p) => p.field === 'CLIENT_ID').forEach((pattern) => {
+      if (pattern.pattern.test(clientId)) {
+        detectedIssues.push(`  ❌ ${pattern.description}`);
+      }
+    });
+
+    // CLIENT_SECRETの検証
+    testPatterns.filter((p) => p.field === 'CLIENT_SECRET').forEach((pattern) => {
+      if (pattern.pattern.test(clientSecret)) {
+        detectedIssues.push(`  ❌ ${pattern.description}`);
+      }
+    });
+
+    // API URLの検証
+    testPatterns.filter((p) => p.field === 'API_URL').forEach((pattern) => {
+      if (pattern.pattern.test(apiBaseUrl)) {
+        detectedIssues.push(`  ❌ ${pattern.description}`);
+      }
+    });
+
+    // 環境変数の検証
+    testPatterns.filter((p) => p.field === 'ENVIRONMENT').forEach((pattern) => {
+      if (pattern.pattern.test(environment)) {
+        detectedIssues.push(`  ❌ ${pattern.description}`);
+      }
+    });
+
+    // テスト環境が検出された場合
+    if (detectedIssues.length > 0) {
+      console.log('⚠️  テスト環境が検出されました：\n');
+      detectedIssues.forEach((issue) => console.log(issue));
+      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('⛔ オープンロジ連携の設定を中止します');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      console.log('オープンロジは実際の物流サービスです。');
+      console.log('テスト環境から出荷指示を送信すると、実際の出荷処理が');
+      console.log('実行されてしまいます。\n');
+      console.log('本番環境のNext Engine認証情報を設定してから');
+      console.log('再度実行してください。\n');
+      console.log('現在の環境: テスト環境');
+      console.log('必要な環境: 本番環境\n');
+
+      // 強制実行オプションのチェック
+      const forceAllow = allEnvVars.OPENLOGI_FORCE_ALLOW_TEST === 'true';
+      if (forceAllow) {
+        console.log('⚠️  OPENLOGI_FORCE_ALLOW_TEST=true が設定されているため、');
+        console.log('強制的に続行します（本番環境では絶対に使用しないでください）\n');
+        return;
+      }
+
+      process.exit(1);
+    }
+
+    console.log('✓ 本番環境が確認されました\n');
   }
 
   /**

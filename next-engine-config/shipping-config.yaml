@@ -127,6 +127,61 @@ openlogi:
     company_id_env: "OPENLOGI_COMPANY_ID"
     api_endpoint: "https://api.openlogi.com/v1"
 
+  # 本番環境チェック設定（重要）
+  # ================================
+  # テスト環境でのオープンロジ連携を防止
+  environment_check:
+    # 本番環境のみで実行を許可
+    production_only: true
+
+    # 本番環境の判定条件
+    production_indicators:
+      # Next Engine APIエンドポイントが本番用であること
+      next_engine_api_url: "https://api.next-engine.org/api_v1_login"
+      # 環境変数が本番設定であること
+      environment_var: "NEXT_ENGINE_ENV"
+      environment_value: "production"
+
+    # テスト環境の検出パターン
+    test_environment_patterns:
+      # CLIENT_IDにテストパターンが含まれている
+      - pattern: "test_"
+        field: "client_id"
+        description: "CLIENT_IDに'test_'プレフィックスがある"
+
+      # CLIENT_IDにサンプルパターンが含まれている
+      - pattern: "sample"
+        field: "client_id"
+        description: "CLIENT_IDに'sample'が含まれる"
+
+      # API URLがテストエンドポイント
+      - pattern: "/test/"
+        field: "api_url"
+        description: "API URLにテストパスが含まれる"
+
+      # 環境変数が明示的にテスト
+      - pattern: "test|development|dev|staging"
+        field: "environment"
+        description: "環境変数がテスト環境を示している"
+
+    # ブロック時の動作
+    on_test_environment_detected:
+      action: "block"  # block, warn, allow
+      message: |
+        ⚠️ テスト環境でのオープンロジ連携は禁止されています
+
+        オープンロジは実際の物流サービスであり、テスト環境から
+        出荷指示を送信すると実際の出荷処理が実行されてしまいます。
+
+        本番環境の認証情報を設定してから再度実行してください。
+
+        現在の環境: テスト環境
+        必要な環境: 本番環境
+
+      # 強制実行オプション（デバッグ用、本番では無効化推奨）
+      allow_override: false
+      override_env_var: "OPENLOGI_FORCE_ALLOW_TEST"  # trueで強制実行（非推奨）
+
   # 自動化設定
   automation:
     # 出荷指示の自動送信
