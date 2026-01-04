@@ -40,8 +40,10 @@ existing_products:
     cache_file: ./cache/existing-products.json
     # キャッシュ有効期限（時間）
     cache_ttl_hours: 24
-    # 取得時のページサイズ
-    page_size: 100
+    # 取得時のページサイズ（最大値推奨: APIアクセス数を最小化）
+    page_size: 1000  # Next Engineの最大値
+    # 取得するカラム（全カラム推奨: 再取得を避ける）
+    fields: "*"  # 全カラム取得
 
   # 商品識別キー（優先順位順）
   identification_keys:
