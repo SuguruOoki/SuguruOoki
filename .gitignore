@@ -1,1 +1,21 @@
 firebase-debug.log
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Note articles (output directory for note-writing skill)
+note-articles/*
+!note-articles/.gitkeep
+
+# Next Engine API usage tracking (sensitive data)
+next-engine-config/api-usage.json
+next-engine-config/logs/usage-backups/
+next-engine-config/logs/usage-reports/
+
+# Cloudflare Workers (API Usage Manager)
+next-engine-config/workers/api-usage-manager/node_modules/
+next-engine-config/workers/api-usage-manager/.dev.vars
+next-engine-config/workers/api-usage-manager/dist/
+next-engine-config/workers/api-usage-manager/.wrangler/

@@ -122,3 +122,34 @@ Issues use automated branch creation via `robvanderleek/create-issue-branch`:
 - マルチモール対応（楽天・Amazon・Qoo10・Yahoo）
 
 詳細は `.claude/skills/next-engine/SKILL.md` を参照してください。
+
+---
+
+## Note Writing Skill
+
+このリポジトリにはnoteプラットフォーム向けの記事作成を支援するスキルが含まれています。
+
+### スキル
+- `.claude/skills/note-writing/SKILL.md` - note記事作成スキル定義
+
+### 利用可能コマンド
+
+| コマンド | 説明 |
+|---------|------|
+| `/note-write` | 記事の全文を作成 |
+| `/note-outline` | 記事のアウトラインを生成 |
+| `/note-seo` | SEO最適化の提案を生成 |
+| `/note-refine` | 既存記事のブラッシュアップ |
+
+### 対応機能
+- 記事構成の設計（ターゲット読者、アウトライン）
+- コンテンツ作成（導入部、本文、まとめ、CTA）
+- SEO・発見性の最適化（キーワード選定、タイトル最適化、ハッシュタグ）
+- トーン・スタイル調整（カジュアル/ビジネス/技術解説）
+- 記事テンプレート（ハウツー、体験談、技術解説）
+
+### 記事出力先
+- `note-articles/` ディレクトリ（gitignore設定済み）
+- ファイル命名: `YYYY-MM-DD-記事タイトル-slug.md`
+
+詳細は `.claude/skills/note-writing/SKILL.md` を参照してください。
