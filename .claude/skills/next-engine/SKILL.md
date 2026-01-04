@@ -1191,6 +1191,30 @@ echo "Reset at: $(date)" >> next-engine-config/logs/reset-history.txt
 
 ### 初期セットアップ
 
+**自動セットアップスクリプトの利用（推奨）**
+
+対話形式で簡単にセットアップできるスクリプトを提供しています：
+
+```bash
+cd next-engine-config
+npx ts-node scripts/setup-openlogi.ts
+```
+
+スクリプトは以下を自動化します：
+- 環境変数の設定
+- 依存パッケージのインストール（Puppeteer等）
+- ディレクトリ構造の作成
+- 設定ファイルの更新
+- 商品マッピングテンプレートの生成
+
+詳細な手順は [`docs/openlogi-setup-guide.md`](../../next-engine-config/docs/openlogi-setup-guide.md) を参照してください。
+
+---
+
+**手動セットアップの手順**
+
+自動化スクリプトを使用しない場合は、以下の手順で設定してください：
+
 #### 1. オープンロジアカウント登録
 
 ```bash
