@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Next Engine Project Configuration",
+  "description": "複数のNext Engine設定を管理するための構成スキーマ",
+  "type": "object",
+  "required": ["projectId", "projectName", "createdAt", "malls"],
+  "properties": {
+    "projectId": {
+      "type": "string",
+      "description": "プロジェクトの一意識別子",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "projectName": {
+      "type": "string",
+      "description": "プロジェクト名（表示用）"
+    },
+    "companyName": {
+      "type": "string",
+      "description": "会社名"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "作成日時"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "更新日時"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["setup", "testing", "active", "suspended"],
+      "description": "プロジェクトのステータス"
+    },
+    "envFile": {
+      "type": "string",
+      "description": ".envファイルのパス"
+    },
+    "malls": {
+      "type": "array",
+      "description": "有効化するモール一覧",
+      "items": {
+        "type": "string",
+        "enum": ["rakuten", "amazon", "qoo10", "yahoo"]
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "メモ・備考"
+    }
+  }
+}
