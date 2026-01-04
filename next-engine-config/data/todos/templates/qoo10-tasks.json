@@ -1,0 +1,87 @@
+{
+  "templateName": "qoo10",
+  "mallName": "Qoo10",
+  "description": "Qoo10固有のセットアップタスク",
+  "tasks": [
+    {
+      "id": "qoo10-001",
+      "category": "アカウント設定",
+      "title": "Qoo10 QSM管理画面確認",
+      "description": "QSMにログインし、出店者情報を確認",
+      "priority": "high",
+      "order": 1
+    },
+    {
+      "id": "qoo10-002",
+      "category": "API設定",
+      "title": "Qoo10 API利用申請",
+      "description": "API利用申請を行い、APIキーを取得",
+      "priority": "high",
+      "order": 2
+    },
+    {
+      "id": "qoo10-003",
+      "category": "API設定",
+      "title": "Qoo10認証情報を.envに設定",
+      "description": "Seller ID, API Key, User IDを設定",
+      "priority": "high",
+      "order": 3
+    },
+    {
+      "id": "qoo10-004",
+      "category": "店舗設定",
+      "title": "Next EngineとQoo10店舗の紐付け",
+      "description": "NE管理画面からモール連携設定",
+      "priority": "high",
+      "order": 4
+    },
+    {
+      "id": "qoo10-005",
+      "category": "商品設定",
+      "title": "Qoo10カテゴリマッピング",
+      "description": "Qoo10カテゴリコードとの対応設定",
+      "priority": "high",
+      "order": 5
+    },
+    {
+      "id": "qoo10-006",
+      "category": "商品設定",
+      "title": "Qoo10商品情報の追加設定",
+      "description": "Qoo10固有項目の設定",
+      "priority": "medium",
+      "order": 6
+    },
+    {
+      "id": "qoo10-007",
+      "category": "配送設定",
+      "title": "Qoo10配送設定",
+      "description": "配送方法と送料の設定",
+      "priority": "medium",
+      "order": 7
+    },
+    {
+      "id": "qoo10-008",
+      "category": "テスト",
+      "title": "Qoo10テスト出品確認",
+      "description": "テスト商品を出品し連携を確認",
+      "priority": "high",
+      "order": 8
+    },
+    {
+      "id": "qoo10-009",
+      "category": "テスト",
+      "title": "Qoo10在庫同期確認",
+      "description": "在庫数が正しく反映されることを確認",
+      "priority": "high",
+      "order": 9
+    },
+    {
+      "id": "qoo10-010",
+      "category": "運用開始",
+      "title": "Qoo10本番運用開始",
+      "description": "全設定完了後、本番運用を開始",
+      "priority": "high",
+      "order": 10
+    }
+  ]
+}

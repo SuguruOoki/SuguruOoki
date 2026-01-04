@@ -1,0 +1,103 @@
+{
+  "templateName": "rakuten",
+  "mallName": "楽天市場",
+  "description": "楽天市場固有のセットアップタスク",
+  "tasks": [
+    {
+      "id": "rakuten-001",
+      "category": "アカウント設定",
+      "title": "楽天RMS管理画面アクセス確認",
+      "description": "RMSにログインし、API利用申請のページを確認",
+      "priority": "high",
+      "order": 1
+    },
+    {
+      "id": "rakuten-002",
+      "category": "API設定",
+      "title": "楽天API利用申請",
+      "description": "serviceSecret, licenseKeyの発行申請",
+      "priority": "high",
+      "order": 2
+    },
+    {
+      "id": "rakuten-003",
+      "category": "API設定",
+      "title": "楽天API認証情報取得",
+      "description": "serviceSecret, licenseKeyを.envに設定",
+      "priority": "high",
+      "order": 3
+    },
+    {
+      "id": "rakuten-004",
+      "category": "店舗設定",
+      "title": "Next Engineと楽天店舗の紐付け",
+      "description": "NE管理画面からモール連携設定",
+      "priority": "high",
+      "order": 4
+    },
+    {
+      "id": "rakuten-005",
+      "category": "店舗設定",
+      "title": "楽天店舗情報の確認",
+      "description": "店舗URL, 店舗名の確認と設定",
+      "priority": "medium",
+      "order": 5
+    },
+    {
+      "id": "rakuten-006",
+      "category": "商品設定",
+      "title": "楽天カテゴリマッピング",
+      "description": "Next Engineカテゴリと楽天カテゴリの対応設定",
+      "priority": "high",
+      "order": 6
+    },
+    {
+      "id": "rakuten-007",
+      "category": "商品設定",
+      "title": "楽天商品情報の追加設定",
+      "description": "楽天固有項目（キャッチコピー等）の設定",
+      "priority": "medium",
+      "order": 7
+    },
+    {
+      "id": "rakuten-008",
+      "category": "配送設定",
+      "title": "楽天配送グループ設定",
+      "description": "配送方法と送料の設定",
+      "priority": "medium",
+      "order": 8
+    },
+    {
+      "id": "rakuten-009",
+      "category": "配送設定",
+      "title": "あす楽設定（オプション）",
+      "description": "あす楽対応商品の設定",
+      "priority": "low",
+      "order": 9
+    },
+    {
+      "id": "rakuten-010",
+      "category": "テスト",
+      "title": "楽天テスト注文確認",
+      "description": "テスト注文で連携動作を確認",
+      "priority": "high",
+      "order": 10
+    },
+    {
+      "id": "rakuten-011",
+      "category": "テスト",
+      "title": "楽天在庫同期確認",
+      "description": "在庫数が正しく反映されることを確認",
+      "priority": "high",
+      "order": 11
+    },
+    {
+      "id": "rakuten-012",
+      "category": "運用開始",
+      "title": "楽天本番運用開始",
+      "description": "全設定完了後、本番運用を開始",
+      "priority": "high",
+      "order": 12
+    }
+  ]
+}

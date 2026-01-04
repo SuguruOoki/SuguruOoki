@@ -1,0 +1,111 @@
+{
+  "templateName": "amazon",
+  "mallName": "Amazon",
+  "description": "Amazon固有のセットアップタスク",
+  "tasks": [
+    {
+      "id": "amazon-001",
+      "category": "アカウント設定",
+      "title": "Amazon Seller Central確認",
+      "description": "Seller Centralにログインし、出品者IDを確認",
+      "priority": "high",
+      "order": 1
+    },
+    {
+      "id": "amazon-002",
+      "category": "API設定",
+      "title": "SP-API開発者登録",
+      "description": "Developer Centralで開発者として登録",
+      "priority": "high",
+      "order": 2
+    },
+    {
+      "id": "amazon-003",
+      "category": "API設定",
+      "title": "SP-APIアプリ作成",
+      "description": "SP-APIアプリを作成し、LWA認証情報を取得",
+      "priority": "high",
+      "order": 3
+    },
+    {
+      "id": "amazon-004",
+      "category": "API設定",
+      "title": "AWS IAM設定",
+      "description": "SP-API用のIAMロールとポリシーを設定",
+      "priority": "high",
+      "order": 4
+    },
+    {
+      "id": "amazon-005",
+      "category": "API設定",
+      "title": "SP-API認証情報を.envに設定",
+      "description": "Client ID/Secret, AWS認証情報, Role ARNを設定",
+      "priority": "high",
+      "order": 5
+    },
+    {
+      "id": "amazon-006",
+      "category": "店舗設定",
+      "title": "Next EngineとAmazon店舗の紐付け",
+      "description": "NE管理画面からモール連携設定",
+      "priority": "high",
+      "order": 6
+    },
+    {
+      "id": "amazon-007",
+      "category": "商品設定",
+      "title": "AmazonカテゴリIDマッピング",
+      "description": "Browse Node IDとカテゴリの対応設定",
+      "priority": "high",
+      "order": 7
+    },
+    {
+      "id": "amazon-008",
+      "category": "商品設定",
+      "title": "Amazon SKU体系の設定",
+      "description": "Amazon用SKUとNE商品コードの対応",
+      "priority": "medium",
+      "order": 8
+    },
+    {
+      "id": "amazon-009",
+      "category": "商品設定",
+      "title": "FBA/FBM設定",
+      "description": "出荷方法（FBA or 自社出荷）の設定",
+      "priority": "medium",
+      "order": 9
+    },
+    {
+      "id": "amazon-010",
+      "category": "配送設定",
+      "title": "Amazon配送テンプレート設定",
+      "description": "配送グループと送料の設定",
+      "priority": "medium",
+      "order": 10
+    },
+    {
+      "id": "amazon-011",
+      "category": "テスト",
+      "title": "Amazonテスト出品確認",
+      "description": "テスト商品を出品し連携を確認",
+      "priority": "high",
+      "order": 11
+    },
+    {
+      "id": "amazon-012",
+      "category": "テスト",
+      "title": "Amazon在庫同期確認",
+      "description": "在庫数が正しく反映されることを確認",
+      "priority": "high",
+      "order": 12
+    },
+    {
+      "id": "amazon-013",
+      "category": "運用開始",
+      "title": "Amazon本番運用開始",
+      "description": "全設定完了後、本番運用を開始",
+      "priority": "high",
+      "order": 13
+    }
+  ]
+}

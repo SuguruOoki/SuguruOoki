@@ -1,0 +1,95 @@
+{
+  "templateName": "yahoo",
+  "mallName": "Yahoo!ショッピング",
+  "description": "Yahoo!ショッピング固有のセットアップタスク",
+  "tasks": [
+    {
+      "id": "yahoo-001",
+      "category": "アカウント設定",
+      "title": "Yahoo!ストアクリエイターPro確認",
+      "description": "ストアクリエイターProにログインし、ストア情報を確認",
+      "priority": "high",
+      "order": 1
+    },
+    {
+      "id": "yahoo-002",
+      "category": "API設定",
+      "title": "Yahoo! APIアプリケーション登録",
+      "description": "デベロッパーネットワークでアプリを登録",
+      "priority": "high",
+      "order": 2
+    },
+    {
+      "id": "yahoo-003",
+      "category": "API設定",
+      "title": "Yahoo!認証情報を.envに設定",
+      "description": "Store Account, Public Key, Secret Keyを設定",
+      "priority": "high",
+      "order": 3
+    },
+    {
+      "id": "yahoo-004",
+      "category": "店舗設定",
+      "title": "Next EngineとYahoo!店舗の紐付け",
+      "description": "NE管理画面からモール連携設定",
+      "priority": "high",
+      "order": 4
+    },
+    {
+      "id": "yahoo-005",
+      "category": "商品設定",
+      "title": "Yahoo!カテゴリマッピング",
+      "description": "Yahoo!ストアカテゴリとの対応設定",
+      "priority": "high",
+      "order": 5
+    },
+    {
+      "id": "yahoo-006",
+      "category": "商品設定",
+      "title": "Yahoo!商品情報の追加設定",
+      "description": "Yahoo!固有項目（プロモーション等）の設定",
+      "priority": "medium",
+      "order": 6
+    },
+    {
+      "id": "yahoo-007",
+      "category": "配送設定",
+      "title": "Yahoo!配送グループ設定",
+      "description": "配送方法と送料の設定",
+      "priority": "medium",
+      "order": 7
+    },
+    {
+      "id": "yahoo-008",
+      "category": "配送設定",
+      "title": "優良配送設定（オプション）",
+      "description": "優良配送対応商品の設定",
+      "priority": "low",
+      "order": 8
+    },
+    {
+      "id": "yahoo-009",
+      "category": "テスト",
+      "title": "Yahoo!テスト出品確認",
+      "description": "テスト商品を出品し連携を確認",
+      "priority": "high",
+      "order": 9
+    },
+    {
+      "id": "yahoo-010",
+      "category": "テスト",
+      "title": "Yahoo!在庫同期確認",
+      "description": "在庫数が正しく反映されることを確認",
+      "priority": "high",
+      "order": 10
+    },
+    {
+      "id": "yahoo-011",
+      "category": "運用開始",
+      "title": "Yahoo!本番運用開始",
+      "description": "全設定完了後、本番運用を開始",
+      "priority": "high",
+      "order": 11
+    }
+  ]
+}

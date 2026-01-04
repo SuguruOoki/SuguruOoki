@@ -1,0 +1,134 @@
+{
+  "templateName": "common",
+  "description": "全モール共通のセットアップタスク",
+  "tasks": [
+    {
+      "id": "common-001",
+      "category": "認証設定",
+      "title": "Next Engine Developer Networkアカウント作成",
+      "description": "https://developer.next-engine.com/ でアカウントを作成",
+      "priority": "high",
+      "order": 1
+    },
+    {
+      "id": "common-002",
+      "category": "認証設定",
+      "title": "APIアプリケーション登録",
+      "description": "Developer Networkでアプリを登録し、Client ID/Secretを取得",
+      "priority": "high",
+      "order": 2
+    },
+    {
+      "id": "common-003",
+      "category": "認証設定",
+      "title": "Cloudflare Worker デプロイ",
+      "description": "認証コールバック用のWorkerをデプロイ",
+      "priority": "high",
+      "order": 3
+    },
+    {
+      "id": "common-004",
+      "category": "認証設定",
+      "title": "OAuth認証完了",
+      "description": "アクセストークン・リフレッシュトークンを取得",
+      "priority": "high",
+      "order": 4
+    },
+    {
+      "id": "common-005",
+      "category": "認証設定",
+      "title": "トークン自動更新設定",
+      "description": "Cron Triggerによる自動更新を確認",
+      "priority": "medium",
+      "order": 5
+    },
+    {
+      "id": "common-006",
+      "category": "基本設定",
+      "title": "会社情報の確認・更新",
+      "description": "Next Engine管理画面で会社情報を確認",
+      "priority": "medium",
+      "order": 6
+    },
+    {
+      "id": "common-007",
+      "category": "基本設定",
+      "title": "倉庫・在庫拠点の設定",
+      "description": "発送元となる倉庫情報を登録",
+      "priority": "medium",
+      "order": 7
+    },
+    {
+      "id": "common-008",
+      "category": "基本設定",
+      "title": "配送業者の設定",
+      "description": "ヤマト・佐川・日本郵便などの配送業者を登録",
+      "priority": "medium",
+      "order": 8
+    },
+    {
+      "id": "common-009",
+      "category": "商品設定",
+      "title": "商品カテゴリの定義",
+      "description": "商品分類のカテゴリ体系を設計",
+      "priority": "high",
+      "order": 9
+    },
+    {
+      "id": "common-010",
+      "category": "商品設定",
+      "title": "商品コード体系の決定",
+      "description": "XX-XXX-XXXXX-XXX形式のコード体系を確定",
+      "priority": "high",
+      "order": 10
+    },
+    {
+      "id": "common-011",
+      "category": "商品設定",
+      "title": "商品マスタCSV準備",
+      "description": "テンプレートを使用して商品データを準備",
+      "priority": "high",
+      "order": 11
+    },
+    {
+      "id": "common-012",
+      "category": "商品設定",
+      "title": "商品マスタインポート",
+      "description": "CSVバリデーション後にインポート実行",
+      "priority": "high",
+      "order": 12
+    },
+    {
+      "id": "common-013",
+      "category": "在庫設定",
+      "title": "在庫管理方針の決定",
+      "description": "統合在庫 or モール別在庫の方針を決定",
+      "priority": "medium",
+      "order": 13
+    },
+    {
+      "id": "common-014",
+      "category": "在庫設定",
+      "title": "安全在庫の設定",
+      "description": "商品ごとの安全在庫数を設定",
+      "priority": "medium",
+      "order": 14
+    },
+    {
+      "id": "common-015",
+      "category": "運用設定",
+      "title": "通知・アラート設定",
+      "description": "在庫切れ・注文アラートの設定",
+      "priority": "low",
+      "order": 15
+    },
+    {
+      "id": "common-016",
+      "category": "運用設定",
+      "title": "バックアップ・ログ設定",
+      "description": "ログ出力とバックアップ方針を設定",
+      "priority": "low",
+      "order": 16
+    }
+  ]
+}
