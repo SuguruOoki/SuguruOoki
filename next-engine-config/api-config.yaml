@@ -1,0 +1,318 @@
+# Next Engine API 使用量制限設定
+
+# 環境設定
+environment:
+  # 現在の環境（test: テスト環境 / production: 本番環境）
+  current: production  # test | production
+
+  # テスト環境の判定方法
+  detection:
+    # 環境変数で判定
+    env_var: NEXT_ENGINE_ENV  # test | production
+
+    # APIエンドポイントで判定
+    test_api_pattern: "https://testapi.next-engine.*"
+    production_api_pattern: "https://api.next-engine.*"
+
+  # テスト環境の使用量カウント
+  count_test_calls: false  # false: テスト環境のAPIコールはカウントしない
+
+# API使用量制限
+usage_limits:
+  # 月間の最大APIコール数（デフォルト: 1000回）
+  # Next Engineの無料枠は月1000回まで。それを超えると課金が発生します
+  monthly_limit: 1000
+
+  # 警告閾値（上限の何%で警告を出すか）
+  warning_threshold_percent: 80  # 800回で警告
+
+  # 危険閾値（上限の何%で危険警告を出すか）
+  danger_threshold_percent: 90   # 900回で危険警告
+
+  # ブロック閾値（この値を超えたらAPIコールをブロック）
+  block_threshold_percent: 90    # 900回でブロック（90%到達時）
+
+  # 上限到達時の動作
+  on_limit_reached:
+    behavior: block  # block: APIコールを停止 / warn: 警告のみ
+    notification: true  # 通知を送る
+
+# 使用状況ファイルの設定
+usage_tracking:
+  # 使用状況の管理場所
+  # local: ローカルファイルで管理
+  # remote: リモートサーバー（Cloudflare）で管理
+  # hybrid: リモート優先、フォールバックでローカル
+  mode: hybrid
+
+  # ローカルファイル設定
+  local:
+    # 使用状況を記録するファイル
+    file: "./api-usage.json"
+
+    # リセットタイミング
+    reset:
+      # monthly: 毎月1日にリセット / manual: 手動リセットのみ
+      type: monthly
+      # 月初の日付（1-28）
+      day_of_month: 1
+
+    # 自動バックアップ
+    backup:
+      enabled: true
+      # バックアップ先ディレクトリ
+      directory: "./logs/usage-backups"
+      # 保持期間（ヶ月）
+      retention_months: 12
+
+  # リモート管理設定（Cloudflare Workers）
+  remote:
+    # リモートAPI有効化
+    enabled: true
+
+    # Cloudflareワーカーのエンドポイント
+    api_url: "https://next-engine-api-manager.YOUR-SUBDOMAIN.workers.dev"
+
+    # 認証設定
+    auth:
+      # API Key（環境変数で設定推奨）
+      api_key_env: NEXT_ENGINE_API_MANAGER_KEY
+      # または直接指定（非推奨）
+      # api_key: "your-secret-key"
+
+    # タイムアウト設定（ミリ秒）
+    timeout: 5000
+
+    # リトライ設定
+    retry:
+      enabled: true
+      max_attempts: 3
+      backoff_ms: 1000
+
+    # フォールバック設定
+    fallback:
+      # リモートが使えない場合はローカルを使用
+      use_local_on_failure: true
+
+# APIコール数のカウント設定
+counting:
+  # バッチリクエストのカウント方法
+  batch_requests:
+    # each: 各リクエストを1カウント / single: バッチ全体で1カウント
+    count_method: each
+
+  # リトライのカウント
+  retries:
+    # true: リトライもカウント / false: 成功したリクエストのみカウント
+    count_retries: true
+
+  # エラーレスポンスのカウント
+  errors:
+    # true: エラーもカウント / false: エラーは除外
+    count_errors: true
+
+# エンドポイント別の制限（オプション）
+endpoint_limits:
+  # 特定のエンドポイントに個別の制限を設定可能
+  enabled: false
+
+  # エンドポイント別設定例
+  endpoints:
+    - path: "receiveorder/product/search"
+      limit: 500  # このエンドポイントは月500回まで
+
+    - path: "receiveorder/stock/update"
+      limit: 300  # このエンドポイントは月300回まで
+
+# レポート設定
+reporting:
+  # 使用状況レポートの出力
+  enabled: true
+
+  # レポート出力先
+  directory: "./logs/usage-reports"
+
+  # レポート生成頻度
+  frequency:
+    # daily: 毎日 / weekly: 毎週 / monthly: 毎月
+    type: monthly
+
+  # レポートに含める情報
+  include:
+    - total_calls       # 総コール数
+    - by_endpoint      # エンドポイント別
+    - by_date          # 日別
+    - remaining        # 残り回数
+    - projections      # 月末までの予測
+
+# アラート設定
+alerts:
+  # アラート送信方法
+  methods:
+    - console  # コンソール出力
+    # - email  # メール送信（未実装）
+    # - slack  # Slack通知（未実装）
+
+  # アラートトリガー
+  triggers:
+    - type: threshold_warning    # 警告閾値到達
+      enabled: true
+
+    - type: threshold_danger     # 危険閾値到達
+      enabled: true
+
+    - type: limit_reached        # 上限到達
+      enabled: true
+
+    - type: daily_high_usage     # 1日の使用量が異常に高い
+      enabled: true
+      threshold: 100  # 1日100回以上で警告
+
+# デバッグ設定
+debug:
+  # 詳細ログ出力
+  verbose: false
+
+  # 使用量カウントのシミュレーションモード
+  # true: 実際にはカウントしない（テスト用）
+  simulation_mode: false
+
+# APIアクセス数最適化設定
+optimization:
+  # ページネーション設定
+  pagination:
+    # デフォルトのページサイズ（最大値を推奨）
+    default_limit: 1000
+
+    # 最大ページサイズ（Next Engineの上限）
+    max_limit: 1000
+
+    # ページサイズの自動最適化
+    auto_optimize: true
+
+  # カラム取得戦略
+  fields:
+    # all: 全カラム取得 / minimal: 最小限 / auto: 自動判定
+    strategy: all
+
+    # strategy=allの場合に取得するカラムのプリセット
+    presets:
+      product:
+        - product_id
+        - product_code
+        - product_name
+        - price
+        - stock_quantity
+        - jan_code
+        - category_id
+        - category_name
+        - mall_product_code
+        - mall_id
+        - image_url
+        - description
+        - weight
+        - size
+        - manufacturer
+        - brand
+        - creation_date
+        - update_date
+        - status
+        - tags
+
+      stock:
+        - stock_id
+        - product_id
+        - warehouse_id
+        - quantity
+        - allocated_quantity
+        - available_quantity
+        - safety_stock
+        - last_updated
+
+      order:
+        - order_id
+        - order_number
+        - order_date
+        - customer_id
+        - customer_name
+        - total_amount
+        - status
+        - shipping_address
+        - payment_method
+        - items
+
+  # キャッシュ設定
+  cache:
+    # キャッシュ機能を有効化
+    enabled: true
+
+    # デフォルトのTTL（秒）
+    default_ttl: 3600
+
+    # データ種別ごとのキャッシュ設定
+    types:
+      # マスタデータ（変更頻度が低い）
+      categories:
+        enabled: true
+        ttl: 86400  # 24時間
+
+      carriers:
+        enabled: true
+        ttl: 86400  # 24時間
+
+      warehouses:
+        enabled: true
+        ttl: 86400  # 24時間
+
+      # トランザクションデータ（変更頻度が高い）
+      products:
+        enabled: true
+        ttl: 3600  # 1時間
+
+      stocks:
+        enabled: true
+        ttl: 1800  # 30分
+
+      orders:
+        enabled: false  # リアルタイム性が重要なため無効
+
+  # バッチ処理設定
+  batch:
+    # バッチサイズ（Next Engineの上限）
+    size: 100
+
+    # 並列処理を有効化（false推奨: レート制限対策）
+    parallel: false
+
+    # バッチ間のウェイト時間（ミリ秒）
+    wait_between_batches: 100
+
+  # 差分取得設定
+  differential:
+    # 差分取得を有効化
+    enabled: true
+
+    # 最終取得日時の記録先
+    timestamp_file: "./cache/last-sync-timestamps.json"
+
+    # 差分取得のフィールド（updated_date_from等）
+    date_field: updated_date_from
+
+  # 検索条件の最適化
+  search:
+    # サーバー側フィルタリングを優先
+    prefer_server_side_filter: true
+
+    # クライアント側フィルタリングの警告
+    warn_client_side_filter: true
+
+  # API回数の事前見積もり
+  estimation:
+    # 実行前に必要なAPI回数を表示
+    enabled: true
+
+    # 見積もり結果の確認を求める
+    require_confirmation: true
+
+    # 見積もりが上限を超える場合は実行をブロック
+    block_on_exceed: true
