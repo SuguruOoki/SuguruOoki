@@ -112,3 +112,133 @@ shipping_fees:
   free_shipping:
     enabled: true
     threshold: 5000  # 5000円以上で送料無料
+
+# オープンロジ連携設定
+# ================================
+# 物流代行サービス「オープンロジ」との連携
+openlogi:
+  # 基本設定
+  enabled: true
+  default_service: true  # デフォルトで利用（確認あり）
+
+  # 認証情報（環境変数から取得）
+  auth:
+    api_key_env: "OPENLOGI_API_KEY"
+    company_id_env: "OPENLOGI_COMPANY_ID"
+    api_endpoint: "https://api.openlogi.com/v1"
+
+  # 自動化設定
+  automation:
+    # 出荷指示の自動送信
+    auto_ship_instruction: true
+    # ユーザー確認を挟む（重要）
+    require_confirmation: true
+    confirmation_timeout_hours: 24  # 24時間以内に確認がない場合は自動承認
+
+    # 自動送信条件
+    auto_send_conditions:
+      # 受注ステータスが「出荷待ち」の場合のみ
+      order_status: ["shipping_pending", "payment_confirmed"]
+      # 在庫が確保されている
+      stock_secured: true
+      # 配送先住所が完全
+      address_complete: true
+      # オープンロジ対応商品のみ
+      openlogi_compatible_only: true
+
+  # 確認フロー設定
+  confirmation:
+    # 確認方法
+    method: "interactive"  # interactive, email, webhook
+    # 確認時に表示する情報
+    display_info:
+      - order_summary
+      - shipping_address
+      - item_list
+      - estimated_cost
+      - delivery_date
+    # 自動承認条件（オプション）
+    auto_approve_if:
+      total_amount_under: 100000  # 10万円未満は自動承認
+      regular_customer: false  # リピーター顧客は自動承認（falseで無効）
+
+  # 出荷指示送信設定
+  ship_instruction:
+    # バッチ処理
+    batch_enabled: true
+    batch_size: 50  # 一度に50件まで処理
+    batch_interval_minutes: 60  # 1時間ごとに実行
+
+    # 送信タイミング
+    send_timing: "on_confirmation"  # on_order, on_confirmation, scheduled
+    scheduled_time: "10:00"  # scheduledの場合の実行時刻
+
+    # リトライ設定
+    retry:
+      enabled: true
+      max_attempts: 3
+      interval_minutes: 10
+
+  # 在庫連携
+  inventory_sync:
+    enabled: true
+    sync_interval_hours: 1  # 1時間ごとに同期
+    # 在庫更新時のアクション
+    on_stock_update:
+      - update_next_engine
+      - notify_low_stock
+
+  # ステータス同期
+  status_sync:
+    enabled: true
+    # オープンロジ→Next Engineのステータスマッピング
+    status_mapping:
+      "received": "openlogi_received"  # 出荷指示受領
+      "picking": "openlogi_picking"    # ピッキング中
+      "packing": "openlogi_packing"    # 梱包中
+      "shipped": "shipped"              # 出荷完了
+      "cancelled": "cancelled"          # キャンセル
+
+    # 同期間隔
+    sync_interval_minutes: 30
+
+  # 配送業者マッピング
+  carrier_mapping:
+    # オープンロジが使用する配送業者をNext Engineの業者IDにマッピング
+    openlogi_yamato: "yamato"
+    openlogi_sagawa: "sagawa"
+    openlogi_yupack: "japan_post"
+
+  # エラーハンドリング
+  error_handling:
+    # エラー時の通知
+    notify_on_error: true
+    notification_email_env: "OPENLOGI_ERROR_NOTIFICATION_EMAIL"
+
+    # エラー時のフォールバック
+    fallback:
+      # オープンロジ連携失敗時は手動処理に切り替え
+      use_manual_shipping: true
+      # 通知方法
+      fallback_notification: "email"  # email, slack, webhook
+
+  # 料金設定
+  pricing:
+    # 基本保管料
+    storage_fee_per_item_per_month: 10
+    # 出荷手数料
+    shipping_fee_per_order: 200
+    # 梱包資材費
+    packing_material_fee: 50
+
+    # 料金計算に含める
+    include_in_calculation: true
+
+  # ログ・レポート
+  logging:
+    enabled: true
+    log_file: "./logs/openlogi-integration.log"
+    # レポート生成
+    generate_reports: true
+    report_interval: "monthly"
+    report_output_dir: "./logs/openlogi-reports/"

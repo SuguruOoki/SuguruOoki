@@ -1,0 +1,463 @@
+# オープンロジ詳細設定
+# ================================
+# 物流代行サービス「オープンロジ」との連携詳細設定
+
+# 倉庫設定
+warehouse:
+  # 利用倉庫
+  primary_warehouse:
+    warehouse_id: ""  # オープンロジの倉庫ID
+    name: "メイン倉庫"
+    location: "関東"
+
+  # バックアップ倉庫（オプション）
+  backup_warehouse:
+    enabled: false
+    warehouse_id: ""
+    name: "バックアップ倉庫"
+    location: "関西"
+
+# 商品マッピング
+product_mapping:
+  # SKUマッピング方式
+  mapping_method: "auto"  # auto, manual, hybrid
+
+  # 自動マッピング設定
+  auto_mapping:
+    # Next EngineのSKUをオープンロジのSKUにマッピング
+    # 商品コードベース
+    use_product_code: true
+    # JANコードベース
+    use_jan_code: true
+    # カスタムフィールド
+    custom_field: "openlogi_sku"  # Next Engineのカスタムフィールド名
+
+  # 手動マッピング（CSVインポート）
+  manual_mapping:
+    csv_file: "./data/openlogi-sku-mapping.csv"
+    # CSVフォーマット: next_engine_sku,openlogi_sku,product_name
+
+  # マッピング未設定の商品
+  unmapped_products:
+    action: "skip"  # skip, error, create_new
+    notification: true
+
+# ワークフロー設定
+workflow:
+  # 受注から出荷までのフロー
+  order_to_ship:
+    # Step 1: 受注取得
+    step1_fetch_orders:
+      enabled: true
+      # 取得対象ステータス
+      target_statuses:
+        - "payment_confirmed"
+        - "shipping_pending"
+      # 取得間隔
+      fetch_interval_minutes: 30
+      # 最大取得件数（APIコール数削減）
+      max_orders_per_fetch: 1000
+
+    # Step 2: 出荷条件チェック
+    step2_validation:
+      enabled: true
+      checks:
+        # 在庫確認
+        - check: "stock_availability"
+          required: true
+        # 住所完全性チェック
+        - check: "address_completeness"
+          required: true
+        # 商品マッピング確認
+        - check: "product_mapping"
+          required: true
+        # 配送先が配送対象地域か
+        - check: "delivery_area"
+          required: false
+
+      # バリデーション失敗時
+      on_validation_failure:
+        action: "skip_and_notify"  # skip_and_notify, retry, manual_review
+        notification_method: "email"
+
+    # Step 3: ユーザー確認（重要）
+    step3_confirmation:
+      enabled: true
+      # 確認が必要な条件
+      require_confirmation_if:
+        - condition: "always"  # always, high_value, new_customer
+        # 高額注文の閾値
+        high_value_threshold: 50000
+
+      # 確認方法
+      confirmation_method: "interactive"  # interactive, email, auto
+
+      # 確認情報の表示
+      confirmation_display:
+        # サマリー情報
+        show_summary: true
+        # 詳細情報
+        show_details: true
+        # 推定コスト
+        show_estimated_cost: true
+        # 配送予定日
+        show_estimated_delivery: true
+
+      # タイムアウト設定
+      timeout_hours: 24
+      # タイムアウト時のアクション
+      on_timeout: "auto_approve"  # auto_approve, cancel, notify
+
+    # Step 4: オープンロジへ出荷指示送信
+    step4_send_instruction:
+      enabled: true
+      # 送信方式
+      send_method: "batch"  # realtime, batch
+
+      # バッチ送信設定
+      batch_settings:
+        batch_size: 50
+        batch_interval_minutes: 60
+        # バッチ実行時刻（複数指定可）
+        scheduled_times:
+          - "10:00"
+          - "14:00"
+          - "16:00"
+
+      # 送信データ
+      include_data:
+        - order_info
+        - customer_info
+        - shipping_address
+        - item_details
+        - delivery_preferences
+        - gift_options
+
+      # リトライ設定
+      retry:
+        enabled: true
+        max_attempts: 3
+        interval_minutes: 10
+        exponential_backoff: true
+
+    # Step 5: ステータス更新
+    step5_status_update:
+      enabled: true
+      # Next Engineのステータス更新
+      update_next_engine: true
+      new_status: "openlogi_instructed"
+      # メール通知
+      send_notification: true
+      notification_template: "openlogi_instruction_sent"
+
+  # オープンロジからのステータス取得
+  status_polling:
+    enabled: true
+    # ポーリング間隔
+    interval_minutes: 30
+    # 取得対象ステータス
+    target_statuses:
+      - "received"
+      - "picking"
+      - "packing"
+      - "shipped"
+      - "cancelled"
+
+    # ステータス更新時のアクション
+    on_status_change:
+      # Next Engineを更新
+      update_next_engine: true
+      # お客様にメール通知
+      notify_customer: true
+      # 出荷完了時の特別処理
+      on_shipped:
+        - update_tracking_number
+        - send_shipping_notification
+        - sync_to_malls
+
+# 在庫管理
+inventory:
+  # オープンロジ在庫同期
+  sync_from_openlogi:
+    enabled: true
+    # 同期間隔
+    sync_interval_hours: 1
+    # 同期方式
+    sync_method: "incremental"  # full, incremental
+
+    # 在庫更新時のアクション
+    on_inventory_update:
+      # Next Engineに反映
+      update_next_engine: true
+      # モールに反映
+      sync_to_malls: true
+      # 在庫アラート
+      alert_on_low_stock: true
+      low_stock_threshold: 10
+
+  # 安全在庫設定
+  safety_stock:
+    enabled: true
+    # 商品カテゴリ別の安全在庫数
+    by_category:
+      "high_demand": 50
+      "medium_demand": 20
+      "low_demand": 5
+      "default": 10
+
+# 梱包・配送オプション
+packaging:
+  # デフォルト梱包方法
+  default_method: "standard"
+
+  # 梱包方法の定義
+  methods:
+    - method_id: "standard"
+      name: "標準梱包"
+      description: "通常の段ボール梱包"
+      additional_fee: 0
+
+    - method_id: "gift"
+      name: "ギフト梱包"
+      description: "ギフト用の特別梱包"
+      additional_fee: 300
+      # ギフトオプション
+      options:
+        - gift_wrapping
+        - greeting_card
+        - noshi
+
+    - method_id: "fragile"
+      name: "ワレモノ梱包"
+      description: "ワレモノ注意の梱包"
+      additional_fee: 200
+
+  # 緩衝材
+  cushioning:
+    default: "bubble_wrap"
+    options:
+      - "bubble_wrap"
+      - "air_cushion"
+      - "paper_cushion"
+      - "none"
+
+# 配送オプション
+delivery:
+  # 配送指定
+  date_specification:
+    enabled: true
+    # 最短配送日数
+    min_days: 2
+    # 最長指定日数
+    max_days: 30
+
+  # 時間指定
+  time_specification:
+    enabled: true
+    time_slots:
+      - "午前中"
+      - "12-14時"
+      - "14-16時"
+      - "16-18時"
+      - "18-20時"
+      - "19-21時"
+
+  # 置き配
+  contactless_delivery:
+    enabled: true
+    default_location: "玄関前"
+    options:
+      - "玄関前"
+      - "宅配ボックス"
+      - "ガスメーターボックス"
+      - "車庫"
+
+# コスト管理
+cost_management:
+  # コスト計算
+  calculate_costs: true
+
+  # コスト項目
+  cost_items:
+    # 保管料（月額・商品単位）
+    storage_fee:
+      enabled: true
+      fee_per_item: 10
+      calculation_method: "daily_prorated"  # daily_prorated, monthly_fixed
+
+    # 出荷手数料（注文単位）
+    shipping_fee:
+      enabled: true
+      base_fee: 200
+      # アイテム数による追加料金
+      additional_per_item: 50
+      # 重量による追加料金
+      weight_based_fee:
+        enabled: true
+        per_kg: 100
+
+    # 梱包資材費
+    packing_material:
+      enabled: true
+      base_fee: 50
+      # 梱包方法による追加
+      method_fees:
+        gift: 300
+        fragile: 200
+
+    # 付加サービス料金
+    value_added_services:
+      # 検品
+      inspection_fee: 30
+      # ラベル貼付
+      labeling_fee: 20
+      # セット組み
+      assembly_fee: 100
+
+  # レポート
+  cost_report:
+    enabled: true
+    interval: "monthly"
+    output_dir: "./logs/openlogi-costs/"
+    # 詳細レベル
+    detail_level: "detailed"  # summary, detailed
+    # 比較
+    include_comparison: true  # 前月比較
+
+# 通知設定
+notifications:
+  # メール通知
+  email:
+    enabled: true
+    # 通知先（環境変数から取得）
+    recipients_env: "OPENLOGI_NOTIFICATION_EMAIL"
+
+    # 通知イベント
+    events:
+      - event: "instruction_sent"
+        subject: "【オープンロジ】出荷指示を送信しました"
+        template: "openlogi_instruction_sent"
+
+      - event: "shipped"
+        subject: "【オープンロジ】商品が出荷されました"
+        template: "openlogi_shipped"
+
+      - event: "error"
+        subject: "【エラー】オープンロジ連携でエラーが発生"
+        template: "openlogi_error"
+
+      - event: "low_stock"
+        subject: "【在庫アラート】在庫が少なくなっています"
+        template: "openlogi_low_stock"
+
+  # Slack通知
+  slack:
+    enabled: false
+    webhook_url_env: "OPENLOGI_SLACK_WEBHOOK"
+    channel: "#logistics"
+    events:
+      - "shipped"
+      - "error"
+
+# データ同期
+data_sync:
+  # マスタデータ同期
+  master_data:
+    # 商品マスタ
+    products:
+      sync_direction: "bidirectional"  # to_openlogi, from_openlogi, bidirectional
+      sync_interval_hours: 24
+
+    # 在庫マスタ
+    inventory:
+      sync_direction: "from_openlogi"
+      sync_interval_hours: 1
+
+  # トランザクションデータ
+  transaction_data:
+    # 受注データ
+    orders:
+      sync_direction: "to_openlogi"
+      realtime: false
+      batch_interval_minutes: 60
+
+    # 出荷データ
+    shipments:
+      sync_direction: "from_openlogi"
+      realtime: false
+      polling_interval_minutes: 30
+
+# エラーハンドリング詳細
+error_handling:
+  # エラーレベル
+  levels:
+    - level: "critical"
+      # システム停止レベル
+      actions:
+        - "stop_automation"
+        - "notify_admin"
+        - "create_incident"
+
+    - level: "error"
+      # エラーだが継続可能
+      actions:
+        - "skip_item"
+        - "notify_admin"
+        - "log_error"
+
+    - level: "warning"
+      # 警告
+      actions:
+        - "log_warning"
+        - "continue"
+
+  # リトライ戦略
+  retry_strategy:
+    # エラータイプ別リトライ設定
+    by_error_type:
+      "network_error":
+        max_attempts: 5
+        interval_minutes: 5
+        exponential_backoff: true
+
+      "api_rate_limit":
+        max_attempts: 3
+        interval_minutes: 60
+        exponential_backoff: false
+
+      "validation_error":
+        max_attempts: 1
+        # バリデーションエラーはリトライしない
+
+  # フォールバック
+  fallback:
+    enabled: true
+    # オープンロジ停止時
+    on_openlogi_unavailable:
+      action: "switch_to_manual"
+      notification: "immediate"
+
+    # 部分的障害時
+    on_partial_failure:
+      action: "continue_with_available"
+      notification: "summary"
+
+# テスト・デバッグ
+testing:
+  # テストモード
+  test_mode: false
+
+  # テストモード設定
+  test_settings:
+    # 実際のAPI呼び出しをスキップ
+    skip_api_calls: true
+    # モックデータ使用
+    use_mock_data: true
+    # ログレベル
+    log_level: "debug"
+
+  # サンドボックス環境
+  sandbox:
+    enabled: false
+    api_endpoint: "https://sandbox-api.openlogi.com/v1"
+    api_key_env: "OPENLOGI_SANDBOX_API_KEY"

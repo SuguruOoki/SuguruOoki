@@ -1151,3 +1151,672 @@ echo "Reset at: $(date)" >> next-engine-config/logs/reset-history.txt
 - [Next Engine Developer Network](https://developer.next-engine.com/)
 - [Next Engine API エンドポイント一覧](https://developer.next-engine.com/api)
 - 設計書: `next-engine-skill-design.md`
+
+---
+
+## オープンロジ連携
+
+物流代行サービス「オープンロジ」との連携により、出荷業務を自動化します。
+
+### 概要
+
+オープンロジは、EC事業者向けの物流代行サービスです。商品の保管、ピッキング、梱包、発送までを一括で委託できます。
+
+**メリット:**
+- 物流業務の外部委託で業務効率化
+- 倉庫スペース不要
+- 配送品質の向上
+- スケーラブルな物流体制
+
+### 連携フロー
+
+```
+1. Next Engineで受注取得
+   ↓
+2. 出荷条件チェック（在庫、住所、商品マッピング等）
+   ↓
+3. ユーザー確認（デフォルトON、確認あり）★重要★
+   ↓
+4. オープンロジへ出荷指示送信
+   ↓
+5. オープンロジで出荷処理
+   ↓
+6. ステータス同期（出荷完了通知等）
+```
+
+### 設定ファイル
+
+- **基本設定**: `next-engine-config/shipping-config.yaml` の `openlogi` セクション
+- **詳細設定**: `next-engine-config/openlogi-config.yaml`
+
+### 初期セットアップ
+
+#### 1. オープンロジアカウント登録
+
+```bash
+# オープンロジに登録
+# https://openlogi.com/
+
+# API認証情報を取得
+# 管理画面 → 設定 → API設定
+```
+
+#### 2. 環境変数設定
+
+`.env` ファイルに認証情報を追加：
+
+```bash
+# オープンロジAPI認証
+OPENLOGI_API_KEY="your-openlogi-api-key"
+OPENLOGI_COMPANY_ID="your-company-id"
+
+# 通知先メールアドレス
+OPENLOGI_NOTIFICATION_EMAIL="your-email@example.com"
+OPENLOGI_ERROR_NOTIFICATION_EMAIL="admin@example.com"
+```
+
+#### 3. 設定ファイルの調整
+
+`shipping-config.yaml` を編集：
+
+```yaml
+openlogi:
+  enabled: true
+  default_service: true  # デフォルトで利用
+
+  automation:
+    auto_ship_instruction: true
+    require_confirmation: true  # 確認を必須にする
+    confirmation_timeout_hours: 24
+```
+
+`openlogi-config.yaml` を編集：
+
+```yaml
+workflow:
+  order_to_ship:
+    step3_confirmation:
+      enabled: true
+      confirmation_method: "interactive"  # 対話的確認
+
+      # 確認が必要な条件
+      require_confirmation_if:
+        - condition: "always"  # 常に確認
+```
+
+#### 4. 商品マッピング設定
+
+Next EngineのSKUとオープンロジのSKUをマッピング：
+
+**方法1: 自動マッピング（推奨）**
+
+```yaml
+# openlogi-config.yaml
+product_mapping:
+  mapping_method: "auto"
+  auto_mapping:
+    use_product_code: true
+    use_jan_code: true
+```
+
+**方法2: 手動マッピング（CSVファイル）**
+
+```csv
+# data/openlogi-sku-mapping.csv
+next_engine_sku,openlogi_sku,product_name
+SKU001,OPENLOGI-SKU-001,商品A
+SKU002,OPENLOGI-SKU-002,商品B
+```
+
+```yaml
+# openlogi-config.yaml
+product_mapping:
+  mapping_method: "manual"
+  manual_mapping:
+    csv_file: "./data/openlogi-sku-mapping.csv"
+```
+
+### 基本的な使用方法
+
+#### `/next-engine-openlogi` コマンド
+
+オープンロジ連携を実行します。
+
+```bash
+# 基本実行（確認あり）
+/next-engine-openlogi
+
+# オプション
+/next-engine-openlogi --dry-run        # 実行せず確認のみ
+/next-engine-openlogi --no-confirm     # 確認スキップ（注意）
+/next-engine-openlogi --batch-size 30  # バッチサイズ指定
+```
+
+#### TypeScript実装例
+
+```typescript
+import axios from 'axios';
+import * as yaml from 'js-yaml';
+import * as fs from 'fs';
+
+// 設定読み込み
+const shippingConfig = yaml.load(
+  fs.readFileSync('next-engine-config/shipping-config.yaml', 'utf8')
+) as any;
+
+const openlogiConfig = yaml.load(
+  fs.readFileSync('next-engine-config/openlogi-config.yaml', 'utf8')
+) as any;
+
+// オープンロジAPIクライアント
+class OpenlogiClient {
+  private apiKey: string;
+  private companyId: string;
+  private apiEndpoint: string;
+
+  constructor() {
+    this.apiKey = process.env.OPENLOGI_API_KEY || '';
+    this.companyId = process.env.OPENLOGI_COMPANY_ID || '';
+    this.apiEndpoint = shippingConfig.openlogi.auth.api_endpoint;
+  }
+
+  // 出荷指示送信
+  async sendShipInstruction(order: Order): Promise<ShipInstructionResponse> {
+    const response = await axios.post(
+      `${this.apiEndpoint}/ship_instructions`,
+      {
+        company_id: this.companyId,
+        order_id: order.order_id,
+        customer: {
+          name: order.customer_name,
+          postal_code: order.postal_code,
+          address: order.address,
+          phone: order.phone,
+        },
+        items: order.items.map(item => ({
+          sku: item.openlogi_sku,  // マッピング済みSKU
+          quantity: item.quantity,
+        })),
+        delivery_options: {
+          date: order.delivery_date,
+          time: order.delivery_time,
+          gift_wrapping: order.gift_wrapping,
+        },
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  }
+
+  // ステータス取得
+  async getShipmentStatus(instructionId: string): Promise<ShipmentStatus> {
+    const response = await axios.get(
+      `${this.apiEndpoint}/ship_instructions/${instructionId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+        },
+      }
+    );
+
+    return response.data;
+  }
+
+  // 在庫取得
+  async getInventory(): Promise<InventoryItem[]> {
+    const response = await axios.get(
+      `${this.apiEndpoint}/inventory`,
+      {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+        },
+        params: {
+          company_id: this.companyId,
+        },
+      }
+    );
+
+    return response.data.items;
+  }
+}
+
+// オープンロジ連携ワークフロー
+class OpenlogiWorkflow {
+  private nextEngineClient: NextEngineClient;
+  private openlogiClient: OpenlogiClient;
+
+  constructor() {
+    this.nextEngineClient = new NextEngineClient();
+    this.openlogiClient = new OpenlogiClient();
+  }
+
+  // Step 1: 受注取得
+  async fetchOrders(): Promise<Order[]> {
+    const config = openlogiConfig.workflow.order_to_ship.step1_fetch_orders;
+
+    const orders = await this.nextEngineClient.searchOrders({
+      status: config.target_statuses,
+      limit: config.max_orders_per_fetch,
+    });
+
+    console.log(`📥 受注取得: ${orders.length}件`);
+    return orders;
+  }
+
+  // Step 2: 出荷条件チェック
+  async validateOrders(orders: Order[]): Promise<Order[]> {
+    const config = openlogiConfig.workflow.order_to_ship.step2_validation;
+    const validOrders: Order[] = [];
+
+    for (const order of orders) {
+      let isValid = true;
+      const errors: string[] = [];
+
+      // 在庫確認
+      if (config.checks.find(c => c.check === 'stock_availability')?.required) {
+        const hasStock = await this.checkStock(order);
+        if (!hasStock) {
+          errors.push('在庫不足');
+          isValid = false;
+        }
+      }
+
+      // 住所確認
+      if (config.checks.find(c => c.check === 'address_completeness')?.required) {
+        const addressComplete = this.validateAddress(order);
+        if (!addressComplete) {
+          errors.push('住所不完全');
+          isValid = false;
+        }
+      }
+
+      // 商品マッピング確認
+      if (config.checks.find(c => c.check === 'product_mapping')?.required) {
+        const allMapped = await this.checkProductMapping(order);
+        if (!allMapped) {
+          errors.push('商品マッピング未設定');
+          isValid = false;
+        }
+      }
+
+      if (isValid) {
+        validOrders.push(order);
+      } else {
+        console.log(`⚠️ 注文 ${order.order_id}: ${errors.join(', ')}`);
+      }
+    }
+
+    console.log(`✅ バリデーション通過: ${validOrders.length}/${orders.length}件`);
+    return validOrders;
+  }
+
+  // Step 3: ユーザー確認（重要）
+  async confirmShipment(orders: Order[]): Promise<Order[]> {
+    const config = openlogiConfig.workflow.order_to_ship.step3_confirmation;
+
+    if (!config.enabled || config.confirmation_method === 'auto') {
+      return orders;
+    }
+
+    // 確認情報の表示
+    console.log('\n📦 出荷指示確認\n');
+    console.log('─'.repeat(60));
+
+    let totalCost = 0;
+    for (const order of orders) {
+      console.log(`\n注文ID: ${order.order_id}`);
+      console.log(`顧客名: ${order.customer_name}`);
+      console.log(`配送先: ${order.address}`);
+      console.log(`商品数: ${order.items.length}点`);
+
+      const cost = this.calculateShippingCost(order);
+      totalCost += cost;
+      console.log(`推定コスト: ¥${cost.toLocaleString()}`);
+    }
+
+    console.log('\n─'.repeat(60));
+    console.log(`合計: ${orders.length}件の注文`);
+    console.log(`推定総コスト: ¥${totalCost.toLocaleString()}`);
+    console.log('\n');
+
+    // ユーザー確認
+    const readline = require('readline').createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    const confirmed = await new Promise<boolean>(resolve => {
+      readline.question(
+        'オープンロジへ出荷指示を送信しますか？ (y/N): ',
+        (answer: string) => {
+          readline.close();
+          resolve(answer.toLowerCase() === 'y');
+        }
+      );
+    });
+
+    if (!confirmed) {
+      console.log('❌ 出荷指示をキャンセルしました');
+      return [];
+    }
+
+    console.log('✅ 出荷指示を承認しました');
+    return orders;
+  }
+
+  // Step 4: オープンロジへ出荷指示送信
+  async sendInstructions(orders: Order[]): Promise<void> {
+    const config = openlogiConfig.workflow.order_to_ship.step4_send_instruction;
+
+    if (config.send_method === 'batch') {
+      // バッチ送信
+      const batchSize = config.batch_settings.batch_size;
+
+      for (let i = 0; i < orders.length; i += batchSize) {
+        const batch = orders.slice(i, i + batchSize);
+        console.log(`\n📤 バッチ送信 (${i + 1}-${Math.min(i + batchSize, orders.length)}/${orders.length})`);
+
+        for (const order of batch) {
+          try {
+            const result = await this.openlogiClient.sendShipInstruction(order);
+            console.log(`  ✅ ${order.order_id}: 指示ID ${result.instruction_id}`);
+
+            // Next Engineステータス更新
+            await this.nextEngineClient.updateOrderStatus(
+              order.order_id,
+              'openlogi_instructed'
+            );
+          } catch (error) {
+            console.error(`  ❌ ${order.order_id}: ${error.message}`);
+
+            // リトライ処理
+            if (config.retry.enabled) {
+              await this.retryInstruction(order, config.retry);
+            }
+          }
+        }
+
+        // バッチ間のインターバル
+        if (i + batchSize < orders.length) {
+          await this.sleep(config.batch_settings.batch_interval_minutes * 60 * 1000);
+        }
+      }
+    } else {
+      // リアルタイム送信
+      for (const order of orders) {
+        await this.openlogiClient.sendShipInstruction(order);
+      }
+    }
+
+    console.log('\n✅ 出荷指示送信完了');
+  }
+
+  // ステータス同期
+  async syncStatus(): Promise<void> {
+    const config = openlogiConfig.workflow.status_polling;
+
+    console.log('🔄 オープンロジステータス同期開始');
+
+    // オープンロジ出荷中の注文を取得
+    const orders = await this.nextEngineClient.searchOrders({
+      status: ['openlogi_instructed', 'openlogi_received', 'openlogi_picking', 'openlogi_packing'],
+    });
+
+    for (const order of orders) {
+      if (!order.openlogi_instruction_id) continue;
+
+      try {
+        const status = await this.openlogiClient.getShipmentStatus(
+          order.openlogi_instruction_id
+        );
+
+        // ステータスマッピング
+        const statusMapping = shippingConfig.openlogi.status_sync.status_mapping;
+        const newStatus = statusMapping[status.status];
+
+        if (newStatus && newStatus !== order.status) {
+          await this.nextEngineClient.updateOrderStatus(order.order_id, newStatus);
+          console.log(`  🔄 ${order.order_id}: ${order.status} → ${newStatus}`);
+
+          // 出荷完了時の処理
+          if (newStatus === 'shipped') {
+            await this.handleShipped(order, status);
+          }
+        }
+      } catch (error) {
+        console.error(`  ❌ ${order.order_id}: ${error.message}`);
+      }
+    }
+
+    console.log('✅ ステータス同期完了');
+  }
+
+  // 出荷完了処理
+  private async handleShipped(order: Order, status: ShipmentStatus): Promise<void> {
+    // 追跡番号を更新
+    if (status.tracking_number) {
+      await this.nextEngineClient.updateOrder(order.order_id, {
+        tracking_number: status.tracking_number,
+      });
+    }
+
+    // お客様に出荷通知メール送信
+    // await this.sendShippingNotification(order, status.tracking_number);
+
+    // モールに同期
+    // await this.syncToMalls(order);
+
+    console.log(`  📧 出荷通知送信: ${order.order_id}`);
+  }
+
+  // ヘルパーメソッド
+  private async checkStock(order: Order): Promise<boolean> {
+    // 在庫確認ロジック
+    return true;
+  }
+
+  private validateAddress(order: Order): boolean {
+    return !!(order.postal_code && order.address && order.customer_name);
+  }
+
+  private async checkProductMapping(order: Order): Promise<boolean> {
+    // 全商品がマッピング済みか確認
+    for (const item of order.items) {
+      if (!item.openlogi_sku) return false;
+    }
+    return true;
+  }
+
+  private calculateShippingCost(order: Order): number {
+    const pricing = shippingConfig.openlogi.pricing;
+    let cost = pricing.shipping_fee_per_order;
+    cost += order.items.length * pricing.packing_material_fee;
+    return cost;
+  }
+
+  private async retryInstruction(order: Order, retryConfig: any): Promise<void> {
+    // リトライロジック
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+// 実行
+async function main() {
+  const workflow = new OpenlogiWorkflow();
+
+  // Step 1-4: 出荷指示送信
+  const orders = await workflow.fetchOrders();
+  const validOrders = await workflow.validateOrders(orders);
+  const confirmedOrders = await workflow.confirmShipment(validOrders);
+  await workflow.sendInstructions(confirmedOrders);
+
+  // ステータス同期（定期実行）
+  setInterval(async () => {
+    await workflow.syncStatus();
+  }, 30 * 60 * 1000);  // 30分ごと
+}
+
+// main().catch(console.error);
+```
+
+### 在庫同期
+
+オープンロジの在庫をNext Engineに同期：
+
+```typescript
+async function syncInventoryFromOpenlogi() {
+  const openlogiClient = new OpenlogiClient();
+  const nextEngineClient = new NextEngineClient();
+
+  // オープンロジから在庫取得
+  const inventory = await openlogiClient.getInventory();
+
+  for (const item of inventory) {
+    // SKUマッピング（オープンロジ → Next Engine）
+    const nextEngineSku = await getNextEngineSku(item.sku);
+    if (!nextEngineSku) continue;
+
+    // Next Engineの在庫を更新
+    await nextEngineClient.updateStock(nextEngineSku, {
+      stock_quantity: item.quantity,
+      warehouse: 'openlogi',
+    });
+
+    console.log(`🔄 ${nextEngineSku}: 在庫 ${item.quantity}`);
+  }
+
+  console.log('✅ 在庫同期完了');
+}
+```
+
+### コスト管理
+
+オープンロジ利用コストを計算・レポート：
+
+```typescript
+async function generateCostReport(month: string) {
+  const config = openlogiConfig.cost_management;
+
+  // 該当月の出荷データ取得
+  const shipments = await getShipmentsForMonth(month);
+
+  let totalCost = 0;
+  const breakdown = {
+    storage: 0,
+    shipping: 0,
+    packing: 0,
+    services: 0,
+  };
+
+  for (const shipment of shipments) {
+    // 出荷手数料
+    const shippingCost =
+      config.cost_items.shipping_fee.base_fee +
+      (shipment.items.length * config.cost_items.shipping_fee.additional_per_item);
+    breakdown.shipping += shippingCost;
+
+    // 梱包資材費
+    const packingCost = config.cost_items.packing_material.base_fee;
+    breakdown.packing += packingCost;
+
+    totalCost += shippingCost + packingCost;
+  }
+
+  // レポート出力
+  const report = {
+    month,
+    total_shipments: shipments.length,
+    costs: {
+      total: totalCost,
+      breakdown,
+      per_shipment: totalCost / shipments.length,
+    },
+  };
+
+  fs.writeFileSync(
+    `${config.cost_report.output_dir}/${month}.json`,
+    JSON.stringify(report, null, 2)
+  );
+
+  console.log(`📊 コストレポート生成: ${month}`);
+  console.log(`   総コスト: ¥${totalCost.toLocaleString()}`);
+  console.log(`   出荷数: ${shipments.length}件`);
+  console.log(`   平均単価: ¥${(totalCost / shipments.length).toLocaleString()}`);
+}
+```
+
+### トラブルシューティング
+
+#### オープンロジAPI接続エラー
+
+```bash
+# API認証情報を確認
+echo $OPENLOGI_API_KEY
+echo $OPENLOGI_COMPANY_ID
+
+# 接続テスト
+curl -H "Authorization: Bearer $OPENLOGI_API_KEY" \
+  https://api.openlogi.com/v1/ping
+```
+
+#### 商品マッピングエラー
+
+```bash
+# マッピングされていない商品を確認
+/next-engine-openlogi --check-mapping
+
+# 手動マッピングCSVを生成
+/next-engine-openlogi --export-unmapped
+```
+
+#### ステータス同期の遅延
+
+```yaml
+# openlogi-config.yaml
+workflow:
+  status_polling:
+    interval_minutes: 15  # 30分 → 15分に短縮
+```
+
+### ベストプラクティス
+
+1. **確認フローは必須**
+   - `require_confirmation: true` を維持
+   - 高額注文は特に慎重に確認
+
+2. **バッチ処理を活用**
+   - 一度に大量の出荷指示を送信しない
+   - APIレート制限に注意
+
+3. **在庫同期は頻繁に**
+   - 1時間ごとの同期を推奨
+   - 在庫切れを防ぐ
+
+4. **コスト監視**
+   - 月次レポートで予算管理
+   - 予想外のコスト増加に注意
+
+5. **エラーハンドリング**
+   - リトライ機能を有効化
+   - フォールバック先を用意
+
+### セキュリティ
+
+- API キーは環境変数で管理
+- `.env` ファイルは `.gitignore` に追加済み
+- 本番環境とテスト環境で異なるAPI キーを使用
+
+### 参考資料
+
+- [オープンロジ公式サイト](https://openlogi.com/)
+- [オープンロジAPI ドキュメント](https://openlogi.com/api-docs/)
+- 設定ファイル: `shipping-config.yaml`, `openlogi-config.yaml`

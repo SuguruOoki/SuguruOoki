@@ -242,10 +242,196 @@ cp api-usage.json.example api-usage.json
 
 月次レポートは `logs/usage-reports/` に自動生成されます。
 
+## オープンロジ連携（物流自動化）
+
+物流代行サービス「オープンロジ」との連携により、出荷業務を自動化できます。
+
+### オープンロジとは
+
+EC事業者向けの物流代行サービスです。商品の保管、ピッキング、梱包、発送までを一括で委託できます。
+
+**メリット:**
+- 物流業務の外部委託で業務効率化
+- 倉庫スペース不要
+- 配送品質の向上
+- スケーラブルな物流体制
+
+### 連携フロー
+
+```
+1. Next Engineで受注取得
+   ↓
+2. 出荷条件チェック（在庫、住所、商品マッピング等）
+   ↓
+3. ユーザー確認（デフォルトON、確認あり）★重要★
+   ↓
+4. オープンロジへ出荷指示送信
+   ↓
+5. オープンロジで出荷処理
+   ↓
+6. ステータス同期（出荷完了通知等）
+```
+
+### 初期セットアップ
+
+#### 1. オープンロジアカウント登録
+
+```bash
+# オープンロジに登録
+https://openlogi.com/
+
+# API認証情報を取得
+# 管理画面 → 設定 → API設定
+```
+
+#### 2. 環境変数設定
+
+`.env` ファイルに認証情報を追加：
+
+```bash
+# オープンロジAPI認証
+OPENLOGI_API_KEY="your-openlogi-api-key"
+OPENLOGI_COMPANY_ID="your-company-id"
+
+# 通知先メールアドレス
+OPENLOGI_NOTIFICATION_EMAIL="your-email@example.com"
+OPENLOGI_ERROR_NOTIFICATION_EMAIL="admin@example.com"
+```
+
+#### 3. 設定ファイルの調整
+
+`shipping-config.yaml` を編集：
+
+```yaml
+openlogi:
+  enabled: true
+  default_service: true  # デフォルトで利用
+
+  automation:
+    auto_ship_instruction: true
+    require_confirmation: true  # 確認を必須にする（重要）
+    confirmation_timeout_hours: 24
+```
+
+`openlogi-config.yaml` を編集：
+
+```yaml
+workflow:
+  order_to_ship:
+    step3_confirmation:
+      enabled: true
+      confirmation_method: "interactive"  # 対話的確認
+
+      # 確認が必要な条件
+      require_confirmation_if:
+        - condition: "always"  # 常に確認
+```
+
+#### 4. 商品マッピング設定
+
+Next EngineのSKUとオープンロジのSKUをマッピング：
+
+**方法1: 自動マッピング（推奨）**
+
+```yaml
+# openlogi-config.yaml
+product_mapping:
+  mapping_method: "auto"
+  auto_mapping:
+    use_product_code: true
+    use_jan_code: true
+```
+
+**方法2: 手動マッピング（CSVファイル）**
+
+```csv
+# data/openlogi-sku-mapping.csv
+next_engine_sku,openlogi_sku,product_name
+SKU001,OPENLOGI-SKU-001,商品A
+SKU002,OPENLOGI-SKU-002,商品B
+```
+
+```yaml
+# openlogi-config.yaml
+product_mapping:
+  mapping_method: "manual"
+  manual_mapping:
+    csv_file: "./data/openlogi-sku-mapping.csv"
+```
+
+### 基本的な使用方法
+
+```bash
+# 基本実行（確認あり）
+/user:next-engine-openlogi
+
+# オプション
+/user:next-engine-openlogi --dry-run        # 実行せず確認のみ
+/user:next-engine-openlogi --no-confirm     # 確認スキップ（注意）
+/user:next-engine-openlogi --batch-size 30  # バッチサイズ指定
+```
+
+### 自動化のポイント
+
+1. **デフォルトでオープンロジを利用**
+   - `default_service: true` でデフォルト有効化
+   - 出荷条件を満たす注文は自動的にオープンロジへ
+
+2. **確認フローは必須**
+   - `require_confirmation: true` で確認を必須化
+   - 高額注文や初回注文は特に慎重に確認
+   - 確認画面には注文サマリー、コスト推定、配送先を表示
+
+3. **バッチ処理**
+   - 一度に大量の出荷指示を送信しない
+   - デフォルト: 50件ずつ、1時間ごと
+
+4. **在庫同期**
+   - 1時間ごとにオープンロジの在庫を同期
+   - 在庫切れを防止
+
+5. **ステータス同期**
+   - 30分ごとにオープンロジのステータスを確認
+   - 出荷完了時は自動的にNext Engineとモールに反映
+
+### トラブルシューティング
+
+#### 商品マッピングエラー
+
+```bash
+# マッピングされていない商品を確認
+/user:next-engine-openlogi --check-mapping
+
+# 手動マッピングCSVを生成
+/user:next-engine-openlogi --export-unmapped
+```
+
+#### API接続エラー
+
+```bash
+# API認証情報を確認
+echo $OPENLOGI_API_KEY
+echo $OPENLOGI_COMPANY_ID
+
+# 接続テスト
+curl -H "Authorization: Bearer $OPENLOGI_API_KEY" \
+  https://api.openlogi.com/v1/ping
+```
+
+### 参考資料
+
+- [オープンロジ公式サイト](https://openlogi.com/)
+- [オープンロジAPI ドキュメント](https://openlogi.com/api-docs/)
+- 詳細: `.claude/skills/next-engine/SKILL.md` のオープンロジ連携セクション
+
+---
+
 ## 次のステップ
 
 1. `.env` ファイルに認証情報を設定
 2. `api-usage.json` を作成（`cp api-usage.json.example api-usage.json`）
-3. `/user:next-engine-sync --diff-only` で差分確認
-4. `/user:next-engine-sync` で商品同期
-5. `/user:next-engine-inventory` で在庫同期
+3. オープンロジ連携設定（任意）
+4. `/user:next-engine-sync --diff-only` で差分確認
+5. `/user:next-engine-sync` で商品同期
+6. `/user:next-engine-inventory` で在庫同期
+7. `/user:next-engine-openlogi` で出荷自動化（オープンロジ利用時）
