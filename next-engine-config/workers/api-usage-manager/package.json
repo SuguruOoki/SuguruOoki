@@ -1,0 +1,34 @@
+{
+  "name": "next-engine-api-usage-manager",
+  "version": "1.0.0",
+  "description": "Next Engine API usage management service on Cloudflare Workers",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "d1:create": "wrangler d1 create next-engine-api-usage",
+    "d1:schema:local": "wrangler d1 execute next-engine-api-usage --local --file=./schema.sql",
+    "d1:schema:remote": "wrangler d1 execute next-engine-api-usage --file=./schema.sql",
+    "d1:query:local": "wrangler d1 execute next-engine-api-usage --local --command",
+    "d1:query:remote": "wrangler d1 execute next-engine-api-usage --command",
+    "secret:put": "wrangler secret put",
+    "secret:list": "wrangler secret list",
+    "tail": "wrangler tail",
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "next-engine",
+    "api-management"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "wrangler": "^3.95.0",
+    "typescript": "^5.7.2"
+  }
+}

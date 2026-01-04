@@ -1,0 +1,40 @@
+name = "next-engine-api-manager"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Cloudflare Workers設定
+workers_dev = true
+route = ""
+zone_id = ""
+
+# D1データベース
+[[d1_databases]]
+binding = "DB"
+database_name = "next-engine-api-usage"
+database_id = "YOUR_D1_DATABASE_ID"  # `wrangler d1 create next-engine-api-usage` で取得
+
+# 環境変数
+[vars]
+MONTHLY_LIMIT = "1000"
+
+# シークレット（wrangler secret putで設定）
+# API_KEY = "設定必要"
+
+# 本番環境
+[env.production]
+name = "next-engine-api-manager"
+route = "next-engine-api-manager.YOUR-SUBDOMAIN.workers.dev/*"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "next-engine-api-usage"
+database_id = "YOUR_PRODUCTION_D1_DATABASE_ID"
+
+# ステージング環境
+[env.staging]
+name = "next-engine-api-manager-staging"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "next-engine-api-usage-staging"
+database_id = "YOUR_STAGING_D1_DATABASE_ID"
