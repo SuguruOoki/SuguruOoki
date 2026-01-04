@@ -1,0 +1,15 @@
+{
+  "projects": [
+    {
+      "projectId": "bjc-main",
+      "projectName": "BJC本店",
+      "companyName": "株式会社BJC",
+      "createdAt": "2026-01-04T09:00:00.000Z",
+      "updatedAt": "2026-01-04T09:00:00.000Z",
+      "status": "setup",
+      "envFile": ".env",
+      "malls": ["rakuten", "amazon", "qoo10", "yahoo"],
+      "notes": "メインの販売チャネル"
+    }
+  ]
+}

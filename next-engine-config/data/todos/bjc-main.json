@@ -1,0 +1,80 @@
+{
+  "projectId": "bjc-main",
+  "projectName": "BJC本店",
+  "createdAt": "2026-01-04T09:00:00.000Z",
+  "updatedAt": "2026-01-04T09:00:00.000Z",
+  "common": [
+    {"id": "common-001", "category": "認証設定", "title": "Next Engine Developer Networkアカウント作成", "description": "https://developer.next-engine.com/ でアカウントを作成", "priority": "high", "order": 1, "status": "completed", "completedAt": "2026-01-04T08:00:00.000Z"},
+    {"id": "common-002", "category": "認証設定", "title": "APIアプリケーション登録", "description": "Developer Networkでアプリを登録し、Client ID/Secretを取得", "priority": "high", "order": 2, "status": "completed", "completedAt": "2026-01-04T08:00:00.000Z"},
+    {"id": "common-003", "category": "認証設定", "title": "Cloudflare Worker デプロイ", "description": "認証コールバック用のWorkerをデプロイ", "priority": "high", "order": 3, "status": "completed", "completedAt": "2026-01-04T08:30:00.000Z"},
+    {"id": "common-004", "category": "認証設定", "title": "OAuth認証完了", "description": "アクセストークン・リフレッシュトークンを取得", "priority": "high", "order": 4, "status": "completed", "completedAt": "2026-01-04T09:00:00.000Z"},
+    {"id": "common-005", "category": "認証設定", "title": "トークン自動更新設定", "description": "Cron Triggerによる自動更新を確認", "priority": "medium", "order": 5, "status": "completed", "completedAt": "2026-01-04T09:00:00.000Z"},
+    {"id": "common-006", "category": "基本設定", "title": "会社情報の確認・更新", "description": "Next Engine管理画面で会社情報を確認", "priority": "medium", "order": 6, "status": "completed", "completedAt": "2026-01-04T09:00:00.000Z"},
+    {"id": "common-007", "category": "基本設定", "title": "倉庫・在庫拠点の設定", "description": "発送元となる倉庫情報を登録", "priority": "medium", "order": 7, "status": "pending"},
+    {"id": "common-008", "category": "基本設定", "title": "配送業者の設定", "description": "ヤマト・佐川・日本郵便などの配送業者を登録", "priority": "medium", "order": 8, "status": "pending"},
+    {"id": "common-009", "category": "商品設定", "title": "商品カテゴリの定義", "description": "商品分類のカテゴリ体系を設計", "priority": "high", "order": 9, "status": "in_progress"},
+    {"id": "common-010", "category": "商品設定", "title": "商品コード体系の決定", "description": "XX-XXX-XXXXX-XXX形式のコード体系を確定", "priority": "high", "order": 10, "status": "completed", "completedAt": "2026-01-04T09:00:00.000Z"},
+    {"id": "common-011", "category": "商品設定", "title": "商品マスタCSV準備", "description": "テンプレートを使用して商品データを準備", "priority": "high", "order": 11, "status": "pending"},
+    {"id": "common-012", "category": "商品設定", "title": "商品マスタインポート", "description": "CSVバリデーション後にインポート実行", "priority": "high", "order": 12, "status": "pending"},
+    {"id": "common-013", "category": "在庫設定", "title": "在庫管理方針の決定", "description": "統合在庫 or モール別在庫の方針を決定", "priority": "medium", "order": 13, "status": "pending"},
+    {"id": "common-014", "category": "在庫設定", "title": "安全在庫の設定", "description": "商品ごとの安全在庫数を設定", "priority": "medium", "order": 14, "status": "pending"},
+    {"id": "common-015", "category": "運用設定", "title": "通知・アラート設定", "description": "在庫切れ・注文アラートの設定", "priority": "low", "order": 15, "status": "pending"},
+    {"id": "common-016", "category": "運用設定", "title": "バックアップ・ログ設定", "description": "ログ出力とバックアップ方針を設定", "priority": "low", "order": 16, "status": "pending"}
+  ],
+  "malls": {
+    "rakuten": [
+      {"id": "rakuten-001", "category": "アカウント設定", "title": "楽天RMS管理画面アクセス確認", "description": "RMSにログインし、API利用申請のページを確認", "priority": "high", "order": 1, "status": "pending"},
+      {"id": "rakuten-002", "category": "API設定", "title": "楽天API利用申請", "description": "serviceSecret, licenseKeyの発行申請", "priority": "high", "order": 2, "status": "pending"},
+      {"id": "rakuten-003", "category": "API設定", "title": "楽天API認証情報取得", "description": "serviceSecret, licenseKeyを.envに設定", "priority": "high", "order": 3, "status": "pending"},
+      {"id": "rakuten-004", "category": "店舗設定", "title": "Next Engineと楽天店舗の紐付け", "description": "NE管理画面からモール連携設定", "priority": "high", "order": 4, "status": "pending"},
+      {"id": "rakuten-005", "category": "店舗設定", "title": "楽天店舗情報の確認", "description": "店舗URL, 店舗名の確認と設定", "priority": "medium", "order": 5, "status": "pending"},
+      {"id": "rakuten-006", "category": "商品設定", "title": "楽天カテゴリマッピング", "description": "Next Engineカテゴリと楽天カテゴリの対応設定", "priority": "high", "order": 6, "status": "pending"},
+      {"id": "rakuten-007", "category": "商品設定", "title": "楽天商品情報の追加設定", "description": "楽天固有項目（キャッチコピー等）の設定", "priority": "medium", "order": 7, "status": "pending"},
+      {"id": "rakuten-008", "category": "配送設定", "title": "楽天配送グループ設定", "description": "配送方法と送料の設定", "priority": "medium", "order": 8, "status": "pending"},
+      {"id": "rakuten-009", "category": "配送設定", "title": "あす楽設定（オプション）", "description": "あす楽対応商品の設定", "priority": "low", "order": 9, "status": "pending"},
+      {"id": "rakuten-010", "category": "テスト", "title": "楽天テスト注文確認", "description": "テスト注文で連携動作を確認", "priority": "high", "order": 10, "status": "pending"},
+      {"id": "rakuten-011", "category": "テスト", "title": "楽天在庫同期確認", "description": "在庫数が正しく反映されることを確認", "priority": "high", "order": 11, "status": "pending"},
+      {"id": "rakuten-012", "category": "運用開始", "title": "楽天本番運用開始", "description": "全設定完了後、本番運用を開始", "priority": "high", "order": 12, "status": "pending"}
+    ],
+    "amazon": [
+      {"id": "amazon-001", "category": "アカウント設定", "title": "Amazon Seller Central確認", "description": "Seller Centralにログインし、出品者IDを確認", "priority": "high", "order": 1, "status": "pending"},
+      {"id": "amazon-002", "category": "API設定", "title": "SP-API開発者登録", "description": "Developer Centralで開発者として登録", "priority": "high", "order": 2, "status": "pending"},
+      {"id": "amazon-003", "category": "API設定", "title": "SP-APIアプリ作成", "description": "SP-APIアプリを作成し、LWA認証情報を取得", "priority": "high", "order": 3, "status": "pending"},
+      {"id": "amazon-004", "category": "API設定", "title": "AWS IAM設定", "description": "SP-API用のIAMロールとポリシーを設定", "priority": "high", "order": 4, "status": "pending"},
+      {"id": "amazon-005", "category": "API設定", "title": "SP-API認証情報を.envに設定", "description": "Client ID/Secret, AWS認証情報, Role ARNを設定", "priority": "high", "order": 5, "status": "pending"},
+      {"id": "amazon-006", "category": "店舗設定", "title": "Next EngineとAmazon店舗の紐付け", "description": "NE管理画面からモール連携設定", "priority": "high", "order": 6, "status": "pending"},
+      {"id": "amazon-007", "category": "商品設定", "title": "AmazonカテゴリIDマッピング", "description": "Browse Node IDとカテゴリの対応設定", "priority": "high", "order": 7, "status": "pending"},
+      {"id": "amazon-008", "category": "商品設定", "title": "Amazon SKU体系の設定", "description": "Amazon用SKUとNE商品コードの対応", "priority": "medium", "order": 8, "status": "pending"},
+      {"id": "amazon-009", "category": "商品設定", "title": "FBA/FBM設定", "description": "出荷方法（FBA or 自社出荷）の設定", "priority": "medium", "order": 9, "status": "pending"},
+      {"id": "amazon-010", "category": "配送設定", "title": "Amazon配送テンプレート設定", "description": "配送グループと送料の設定", "priority": "medium", "order": 10, "status": "pending"},
+      {"id": "amazon-011", "category": "テスト", "title": "Amazonテスト出品確認", "description": "テスト商品を出品し連携を確認", "priority": "high", "order": 11, "status": "pending"},
+      {"id": "amazon-012", "category": "テスト", "title": "Amazon在庫同期確認", "description": "在庫数が正しく反映されることを確認", "priority": "high", "order": 12, "status": "pending"},
+      {"id": "amazon-013", "category": "運用開始", "title": "Amazon本番運用開始", "description": "全設定完了後、本番運用を開始", "priority": "high", "order": 13, "status": "pending"}
+    ],
+    "qoo10": [
+      {"id": "qoo10-001", "category": "アカウント設定", "title": "Qoo10 QSM管理画面確認", "description": "QSMにログインし、出店者情報を確認", "priority": "high", "order": 1, "status": "pending"},
+      {"id": "qoo10-002", "category": "API設定", "title": "Qoo10 API利用申請", "description": "API利用申請を行い、APIキーを取得", "priority": "high", "order": 2, "status": "pending"},
+      {"id": "qoo10-003", "category": "API設定", "title": "Qoo10認証情報を.envに設定", "description": "Seller ID, API Key, User IDを設定", "priority": "high", "order": 3, "status": "pending"},
+      {"id": "qoo10-004", "category": "店舗設定", "title": "Next EngineとQoo10店舗の紐付け", "description": "NE管理画面からモール連携設定", "priority": "high", "order": 4, "status": "pending"},
+      {"id": "qoo10-005", "category": "商品設定", "title": "Qoo10カテゴリマッピング", "description": "Qoo10カテゴリコードとの対応設定", "priority": "high", "order": 5, "status": "pending"},
+      {"id": "qoo10-006", "category": "商品設定", "title": "Qoo10商品情報の追加設定", "description": "Qoo10固有項目の設定", "priority": "medium", "order": 6, "status": "pending"},
+      {"id": "qoo10-007", "category": "配送設定", "title": "Qoo10配送設定", "description": "配送方法と送料の設定", "priority": "medium", "order": 7, "status": "pending"},
+      {"id": "qoo10-008", "category": "テスト", "title": "Qoo10テスト出品確認", "description": "テスト商品を出品し連携を確認", "priority": "high", "order": 8, "status": "pending"},
+      {"id": "qoo10-009", "category": "テスト", "title": "Qoo10在庫同期確認", "description": "在庫数が正しく反映されることを確認", "priority": "high", "order": 9, "status": "pending"},
+      {"id": "qoo10-010", "category": "運用開始", "title": "Qoo10本番運用開始", "description": "全設定完了後、本番運用を開始", "priority": "high", "order": 10, "status": "pending"}
+    ],
+    "yahoo": [
+      {"id": "yahoo-001", "category": "アカウント設定", "title": "Yahoo!ストアクリエイターPro確認", "description": "ストアクリエイターProにログインし、ストア情報を確認", "priority": "high", "order": 1, "status": "pending"},
+      {"id": "yahoo-002", "category": "API設定", "title": "Yahoo! APIアプリケーション登録", "description": "デベロッパーネットワークでアプリを登録", "priority": "high", "order": 2, "status": "pending"},
+      {"id": "yahoo-003", "category": "API設定", "title": "Yahoo!認証情報を.envに設定", "description": "Store Account, Public Key, Secret Keyを設定", "priority": "high", "order": 3, "status": "pending"},
+      {"id": "yahoo-004", "category": "店舗設定", "title": "Next EngineとYahoo!店舗の紐付け", "description": "NE管理画面からモール連携設定", "priority": "high", "order": 4, "status": "pending"},
+      {"id": "yahoo-005", "category": "商品設定", "title": "Yahoo!カテゴリマッピング", "description": "Yahoo!ストアカテゴリとの対応設定", "priority": "high", "order": 5, "status": "pending"},
+      {"id": "yahoo-006", "category": "商品設定", "title": "Yahoo!商品情報の追加設定", "description": "Yahoo!固有項目（プロモーション等）の設定", "priority": "medium", "order": 6, "status": "pending"},
+      {"id": "yahoo-007", "category": "配送設定", "title": "Yahoo!配送グループ設定", "description": "配送方法と送料の設定", "priority": "medium", "order": 7, "status": "pending"},
+      {"id": "yahoo-008", "category": "配送設定", "title": "優良配送設定（オプション）", "description": "優良配送対応商品の設定", "priority": "low", "order": 8, "status": "pending"},
+      {"id": "yahoo-009", "category": "テスト", "title": "Yahoo!テスト出品確認", "description": "テスト商品を出品し連携を確認", "priority": "high", "order": 9, "status": "pending"},
+      {"id": "yahoo-010", "category": "テスト", "title": "Yahoo!在庫同期確認", "description": "在庫数が正しく反映されることを確認", "priority": "high", "order": 10, "status": "pending"},
+      {"id": "yahoo-011", "category": "運用開始", "title": "Yahoo!本番運用開始", "description": "全設定完了後、本番運用を開始", "priority": "high", "order": 11, "status": "pending"}
+    ]
+  }
+}
